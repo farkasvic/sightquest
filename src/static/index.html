@@ -16,10 +16,18 @@
         padding: 20px;
         border-radius: 15px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px; /* Space between cards */
       }
       h1 {
         font-size: 24px;
         margin-bottom: 10px;
+      }
+      h2 {
+        font-size: 18px;
+        margin-top: 0;
+        color: #555;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 10px;
       }
       #status {
         font-weight: bold;
@@ -32,6 +40,7 @@
         margin: 20px 0;
       }
 
+      /* Buttons */
       button {
         background-color: #ccc;
         color: white;
@@ -42,11 +51,53 @@
         cursor: not-allowed;
         width: 100%;
         transition: 0.3s;
+        margin-bottom: 10px;
       }
       button.active {
         background-color: #007bff;
         cursor: pointer;
         transform: scale(1.05);
+      }
+
+      /* Simulation Buttons (Small) */
+      .sim-btn {
+        width: auto;
+        font-size: 14px;
+        padding: 8px 15px;
+        border-radius: 8px;
+        cursor: pointer;
+        background-color: #6c757d;
+      }
+      .sim-btn:hover {
+        opacity: 0.8;
+      }
+
+      /* Passport Styles */
+      .badge {
+        display: inline-block;
+        padding: 5px 15px;
+        border-radius: 20px;
+        background: #ffd700;
+        color: #000;
+        font-weight: bold;
+        margin: 5px;
+        border: 2px solid orange;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        animation: popIn 0.5s ease;
+      }
+      .stamp-item {
+        border-bottom: 1px solid #eee;
+        padding: 10px;
+        text-align: left;
+        display: flex;
+        justify-content: space-between;
+      }
+      .stamp-cat {
+        font-size: 12px;
+        background: #eee;
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: #666;
       }
 
       /* God Mode Button Style */
@@ -56,17 +107,30 @@
         right: 20px;
         width: 40px;
         height: 40px;
-        background-color: #ffc107; /* Yellow warning color */
+        background-color: #ffc107;
         color: white;
         border-radius: 50%;
         font-size: 20px;
         padding: 0;
         cursor: pointer;
-        opacity: 0.3; /* Mostly invisible */
+        opacity: 0.3;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
       }
       #god-mode-btn:hover {
-        opacity: 1; /* Fully visible on hover */
+        opacity: 1;
+      }
+
+      @keyframes popIn {
+        0% {
+          transform: scale(0);
+        }
+        80% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
       }
     </style>
   </head>
@@ -78,27 +142,73 @@
       <span id="distance">--- m</span>
       <p id="status">Waiting for GPS...</p>
 
-      <button id="cam-btn" onclick="alert('Camera logic goes here!')">
-        📸 FOUND IT
+      <button id="cam-btn" onclick="captureTarget()">📸 FOUND IT</button>
+    </div>
+
+    <div class="card">
+      <h2>My Passport</h2>
+      <div id="badges-container" style="min-height: 30px">
+        <small style="color: #999">No badges yet...</small>
+      </div>
+      <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee" />
+      <div id="stamps-list">
+        <small>Loading profile...</small>
+      </div>
+    </div>
+
+    <div
+      class="card"
+      style="background-color: #f8f9fa; border: 1px dashed #ccc"
+    >
+      <h3 style="margin-top: 0; font-size: 16px">Hackathon Demo Tools</h3>
+      <p style="font-size: 12px; margin-bottom: 10px">
+        Click these to simulate finding other parks and trigger the "Ranger"
+        badge.
+      </p>
+      <button
+        class="sim-btn"
+        style="background: #28a745"
+        onclick="simulateFind('Stanley Park', 'Park')"
+      >
+        + Park 1
+      </button>
+      <button
+        class="sim-btn"
+        style="background: #28a745"
+        onclick="simulateFind('Central Park', 'Park')"
+      >
+        + Park 2
+      </button>
+      <button
+        class="sim-btn"
+        style="background: #28a745"
+        onclick="simulateFind('Queen E Park', 'Park')"
+      >
+        + Park 3
+      </button>
+      <button
+        class="sim-btn"
+        style="background: #dc3545; margin-top: 10px"
+        onclick="resetPassport()"
+      >
+        🗑 Reset Passport
       </button>
     </div>
 
     <button id="god-mode-btn" onclick="toggleGodMode()">⚡️</button>
 
     <script>
-      // 1. Get GPS from Browser
+      // --- 1. CORE GPS LOGIC ---
       function updateLocation() {
         if (!navigator.geolocation) {
           document.getElementById("status").innerText = "GPS not supported";
           return;
         }
-
         navigator.geolocation.getCurrentPosition(sendPosition, showError, {
           enableHighAccuracy: true,
         });
       }
 
-      // 2. Send GPS to Python Backend
       async function sendPosition(position) {
         const lat = position.coords.latitude;
         const lon = position.coords.longitude;
@@ -112,7 +222,7 @@
 
           const data = await response.json();
 
-          // 3. Update UI based on Python response
+          // Update UI
           document.getElementById("distance").innerText =
             Math.round(data.distance_remaining) + " m";
           document.getElementById("status").innerText = data.message;
@@ -135,25 +245,110 @@
           "GPS Error: " + error.message;
       }
 
-      // GOD MODE FUNCTION
+      // --- 2. GAMEPLAY LOGIC (Capturing & Stamps) ---
+
+      // Called when user clicks "FOUND IT" for the main target
+      async function captureTarget() {
+        // In a real app, this launches the camera.
+        // For now, we instantly claim the stamp for the current target.
+        await simulateFind("UBC Clock Tower", "History");
+      }
+
+      // Generic function to add a stamp (used by Main Button AND Demo Buttons)
+      async function simulateFind(name, category) {
+        try {
+          const res = await fetch("/collect-stamp", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ poi_name: name, category: category }),
+          });
+          const data = await res.json();
+
+          if (data.new_badge) {
+            alert("🎉 BADGE UNLOCKED: " + data.new_badge + " 🎉");
+          } else {
+            // Simple toast or alert
+            alert(data.message);
+          }
+
+          // Reload the passport UI to show the new item
+          loadProfile();
+        } catch (err) {
+          console.error("Failed to collect stamp", err);
+        }
+      }
+
+      // --- 3. PASSPORT UI LOGIC ---
+      async function loadProfile() {
+        try {
+          const res = await fetch("/my-profile");
+          const data = await res.json();
+
+          // --- FIX FOR BADGES ---
+          const badgeDiv = document.getElementById("badges-container");
+
+          // 1. Always clear the current list first
+          badgeDiv.innerHTML = "";
+
+          // 2. If empty, show placeholder. If not, show badges.
+          if (data.badges.length === 0) {
+            badgeDiv.innerHTML =
+              '<small style="color:#999">No badges yet...</small>';
+          } else {
+            data.badges.forEach((b) => {
+              badgeDiv.innerHTML += `<span class="badge">🏆 ${b}</span>`;
+            });
+          }
+
+          // --- STAMPS RENDER ---
+          const listDiv = document.getElementById("stamps-list");
+          listDiv.innerHTML = "";
+
+          if (data.stamps.length === 0) {
+            listDiv.innerHTML = "<small>No stamps collected.</small>";
+          } else {
+            data.stamps
+              .slice()
+              .reverse()
+              .forEach((s) => {
+                listDiv.innerHTML += `
+                            <div class="stamp-item">
+                                <span><b>${s.name}</b></span> 
+                                <span class="stamp-cat">${s.category}</span>
+                            </div>`;
+              });
+          }
+        } catch (e) {
+          console.error("Profile load failed", e);
+        }
+      }
+
+      // --- 4. GOD MODE ---
       async function toggleGodMode() {
         try {
-          // Toggles on/off (you can adjust the logic if you want strict On/Off)
           const response = await fetch("/toggle-god-mode?enable=true", {
             method: "POST",
           });
-          const data = await response.json();
           alert("God Mode Enabled: You can now verify anywhere.");
-
-          // Force an immediate update so the button turns blue instantly
           updateLocation();
         } catch (error) {
           console.error("God Mode failed:", error);
         }
       }
 
-      // Run loop every 2 seconds
+      async function resetPassport() {
+        if (!confirm("Are you sure? This will wipe all stamps.")) return;
+
+        await fetch("/reset-db", { method: "POST" });
+        alert("Passport Cleared!");
+        loadProfile(); // Refresh the UI immediately
+      }
+
+      // --- INIT ---
+      // Start GPS loop
       setInterval(updateLocation, 2000);
+      // Load initial profile data
+      loadProfile();
     </script>
   </body>
 </html>
