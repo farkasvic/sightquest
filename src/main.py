@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles 
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from .geocalc import calculate_distance
 
@@ -9,9 +11,15 @@ TARGET_POI = {"lat": 49.2606, "lon": -123.2460} # Sample coordinates, rn UBC clo
 UNLOCK_RADIUS_METERS = 50 #50 m within target
 GOD_MODE = False # For demo purposes, will say we are close to target if True
 
+app.mount("/static", StaticFiles(directory="src/static"), name="static")
+
 class UserLocation(BaseModel):
     lat: float
     lon: float
+
+@app.get("/")
+async def read_index():
+    return FileResponse('src/static/index.html')
 
 @app.post("/check-proximity")
 

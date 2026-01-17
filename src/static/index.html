@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>App Name</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        text-align: center;
+        padding: 20px;
+        background: #f0f2f5;
+      }
+      .card {
+        background: white;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+      #status {
+        font-weight: bold;
+        color: #666;
+      }
+      #distance {
+        font-size: 48px;
+        color: #333;
+        display: block;
+        margin: 20px 0;
+      }
+
+      button {
+        background-color: #ccc;
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        font-size: 20px;
+        border-radius: 50px;
+        cursor: not-allowed;
+        width: 100%;
+        transition: 0.3s;
+      }
+      button.active {
+        background-color: #007bff;
+        cursor: pointer;
+        transform: scale(1.05);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Current Objective</h1>
+      <p>Find the <b style="color: #d63384">Clock Tower</b></p>
+
+      <span id="distance">--- m</span>
+      <p id="status">Waiting for GPS...</p>
+
+      <button id="cam-btn" onclick="alert('Camera logic goes here!')">
+        📸 FOUND IT
+      </button>
+    </div>
+
+    <script>
+      // 1. Get GPS from Browser
+      function updateLocation() {
+        if (!navigator.geolocation) {
+          document.getElementById("status").innerText = "GPS not supported";
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(sendPosition, showError, {
+          enableHighAccuracy: true,
+        });
+      }
+
+      // 2. Send GPS to Python Backend
+      async function sendPosition(position) {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+
+        try {
+          const response = await fetch("/check-proximity", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ lat: lat, lon: lon }),
+          });
+
+          const data = await response.json();
+
+          // 3. Update UI based on Python response
+          document.getElementById("distance").innerText =
+            Math.round(data.distance_remaining) + " m";
+          document.getElementById("status").innerText = data.message;
+
+          const btn = document.getElementById("cam-btn");
+          if (data.can_verify) {
+            btn.classList.add("active");
+            btn.disabled = false;
+          } else {
+            btn.classList.remove("active");
+            btn.disabled = true;
+          }
+        } catch (error) {
+          console.error("Error talking to Python:", error);
+        }
+      }
+
+      function showError(error) {
+        document.getElementById("status").innerText =
+          "GPS Error: " + error.message;
+      }
+
+      // Run loop every 2 seconds
+      setInterval(updateLocation, 2000);
+    </script>
+  </body>
+</html>
