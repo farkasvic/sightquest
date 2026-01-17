@@ -1,12 +1,27 @@
 {
-  "id": "string",
-  "name": "string",
-  "location": {
-    "lat": "number",
-    "lon": "number"
+  "session": {
+    "huntId": "string",
+    "startLocation": {
+      "lat": "number",
+      "lng": "number"
+    },
+    "radiusMeters": "number",
+    "category": "string",
+    "currentQuestIndex": "number",
+    "totalPoints": "number",
+    "startedAt": "ISO_TIMESTAMP",
+    "updatedAt": "ISO_TIMESTAMP"
   },
-  "category": "string",
-  "riddle": "string",
-  "status": "locked | active | completed | failed",
-  "points": "number"
+  "questSubcollection": {
+    "id": "string",
+    "sessionId": "string",
+    "name": "string",
+    "location": { "lat": "number", "lng": "number" },
+    "category": "string",
+    "riddle": "string",
+    "status": "locked | active | completed | failed",
+    "points": "number",
+    "order": "number",
+    "awardedPoints": "number"
+  }
 }
