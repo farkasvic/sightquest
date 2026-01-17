@@ -5,12 +5,18 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles 
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-# Ensure this matches your actual filename (geo_calc.py vs geocalc.py)
+from pymongo import MongoClient
+
 from .geocalc import calculate_distance 
 
 app = FastAPI()
 
 # --- CONFIG ---
+MONGO_URI = "mongodb+srv://farkasv_db_user:SW3aDB0E91ARyPdz@513cluster.lyvt3gy.mongodb.net/"
+client = MongoClient(MONGO_URI)
+db = client["cityquest_db"]
+users_collection = db["users"]
+
 TARGET_POI = {"lat": 49.2606, "lon": -123.2460} # UBC clock tower
 UNLOCK_RADIUS_METERS = 50 
 GOD_MODE = False 
@@ -35,16 +41,21 @@ class StampRequest(BaseModel):
     category: str 
 
 # --- DATABASE HELPERS ---
-def load_db():
-    # If file doesn't exist, start with empty lists
-    if not os.path.exists(DB_FILE):
-        return {"stamps": [], "badges": []}
-    with open(DB_FILE, "r") as f:
-        return json.load(f)
+def get_current_user():
+    """
+    Fetch the 'demo_user'. If they don't exist, create them.
+    """
+    user = users_collection.find_one({"_id": "demo_user"})
+    if not user:
+        user = {"_id": "demo_user", "stamps": [], "badges": []}
+        users_collection.insert_one(user)
+    return user
 
-def save_db(data):
-    with open(DB_FILE, "w") as f:
-        json.dump(data, f, indent=4)
+def update_user_data(user_data):
+    """
+    Save the updated stamps/badges back to Mongo.
+    """
+    users_collection.replace_one({"_id": "demo_user"}, user_data)
 
 # --- ROUTES ---
 
@@ -82,32 +93,35 @@ def toggle_god_mode(enable: bool):
 
 @app.post("/collect-stamp")
 def collect_stamp(stamp: StampRequest):
-    db = load_db()
+    # 1. Get User from Mongo
+    user = get_current_user()
     
-    # 1. Prevent Duplicates (Optional)
-    for s in db["stamps"]:
+    # 2. Prevent Duplicates
+    # (Mongo returns 'stamps' as a list of dicts, same as before)
+    for s in user["stamps"]:
         if s["name"] == stamp.poi_name:
             return {"message": "Stamp already collected!", "new_badge": None}
 
-    # 2. Add New Stamp
+    # 3. Add New Stamp
     new_stamp = {
         "name": stamp.poi_name,
         "category": stamp.category,
         "date": datetime.now().strftime("%Y-%m-%d %H:%M")
     }
-    db["stamps"].append(new_stamp)
+    user["stamps"].append(new_stamp)
     
-    # 3. Check for Badges
+    # 4. Check for Badges
     new_badge = None
-    count = sum(1 for s in db["stamps"] if s["category"] == stamp.category)
+    count = sum(1 for s in user["stamps"] if s["category"] == stamp.category)
     
     for badge_name, rule in BADGE_RULES.items():
         if rule["category"] == stamp.category and count == rule["count"]:
-            if badge_name not in db["badges"]:
-                db["badges"].append(badge_name)
+            if badge_name not in user["badges"]:
+                user["badges"].append(badge_name)
                 new_badge = badge_name
 
-    save_db(db)
+    # 5. Save changes to Mongo
+    update_user_data(user)
     
     return {
         "message": "Stamp Collected!",
@@ -116,10 +130,10 @@ def collect_stamp(stamp: StampRequest):
 
 @app.get("/my-profile")
 def get_profile():
-    return load_db()
+    return get_current_user()
 
 @app.post("/reset-db")
 def reset_db():
-    empty_db = {"stamps": [], "badges": []}
-    save_db(empty_db)
+    # Delete the demo user completely so it regenerates empty next time
+    users_collection.delete_one({"_id": "demo_user"})
     return {"message": "Passport reset successfully!"}
