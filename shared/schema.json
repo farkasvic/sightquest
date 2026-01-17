@@ -1,0 +1,12 @@
+{
+  "id": "string",
+  "name": "string",
+  "location": {
+    "lat": "number",
+    "lon": "number"
+  },
+  "category": "string",
+  "riddle": "string",
+  "status": "locked | active | completed | failed",
+  "points": "number"
+}
