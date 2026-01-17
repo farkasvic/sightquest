@@ -5,29 +5,31 @@ from .geocalc import calculate_distance
 app = FastAPI()
 
 # --- CONFIG ---
-TARGET_POI = {"lat": 49.2606, "lon": -123.2460} # Example: UBC Clock Tower
-UNLOCK_RADIUS_METERS = 50
-GOD_MODE = False # For demo purposes
+TARGET_POI = {"lat": 49.2606, "lon": -123.2460} # Sample coordinates, rn UBC clock tower
+UNLOCK_RADIUS_METERS = 50 #50 m within target
+GOD_MODE = False # For demo purposes, will say we are close to target if True
 
 class UserLocation(BaseModel):
     lat: float
     lon: float
 
 @app.post("/check-proximity")
+
 def check_proximity(user_loc: UserLocation):
-    # 1. Calculate Distance
+
+    # Calculate distance using geocalc function and user lat/lon
     dist = calculate_distance(
         user_loc.lat, user_loc.lon, 
         TARGET_POI["lat"], TARGET_POI["lon"]
     )
     
-    # 2. Determine State
+    # If user us within 50m, can verify status
     can_verify = False
     
     if dist <= UNLOCK_RADIUS_METERS:
         can_verify = True
     
-    # 3. Hackathon "God Mode" (Override for Demo)
+    # "God Mode" (Override for Demo)
     if GOD_MODE:
         can_verify = True
 
@@ -37,7 +39,7 @@ def check_proximity(user_loc: UserLocation):
         "message": "You are close! Look for the target." if can_verify else "Keep walking..."
     }
 
-# Endpoint to toggle God Mode during your presentation
+# Endpoint to toggle God Mode during  presentation
 @app.post("/admin/toggle-god-mode")
 def toggle_god_mode(enabled: bool):
     global GOD_MODE
