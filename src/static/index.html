@@ -492,6 +492,15 @@
         startTracking();
       });
     </script>
+
+    <input
+      type="file"
+      id="camera-input"
+      accept="image/*"
+      capture="environment"
+      style="display: none"
+      onchange="processImage()"
+    />
     <script src="/static/app.js"></script>
   </body>
 </html>
