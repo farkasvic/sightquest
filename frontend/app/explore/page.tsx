@@ -276,7 +276,7 @@ export default function ExplorePage() {
             <div className="p-6 flex flex-col gap-2">
               <NavItem label="Home" href="/" onClick={() => setIsMenuOpen(false)} />
               <NavItem label="Stats" href="/stats" onClick={() => setIsMenuOpen(false)} />
-              <NavItem label="Leaderboard" onClick={() => setIsMenuOpen(false)} />
+              <NavItem label="Leaderboard" href="/leaderboard" onClick={() => setIsMenuOpen(false)} />
               <NavItem label="Settings" onClick={() => setIsMenuOpen(false)} />
             </div>
           </SheetContent>

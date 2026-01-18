@@ -10,6 +10,7 @@ import { StampCard } from "@/components/stamp-card";
 
 export default function StatsPage() {
   // Mock data - replace with actual user data
+  const [totalExp] = useState(2450);
   const [dailySteps] = useState(8543);
   const [stepGoal] = useState(10000);
   const [stamps] = useState([
@@ -54,6 +55,27 @@ export default function StatsPage() {
 
       {/* Main Content */}
       <main className="px-4 py-6 space-y-6 max-w-4xl mx-auto">
+        {/* Total EXP Section */}
+        <Card className="bg-white/90 backdrop-blur-sm border-[#7bc950]/30">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Trophy className="h-6 w-6 text-[#7bc950]" />
+              <CardTitle>Total Experience</CardTitle>
+            </div>
+            <CardDescription>Your overall experience points</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center">
+              <div className="text-6xl font-bold text-[#7bc950]">
+                {totalExp.toLocaleString()}
+              </div>
+              <p className="text-sm text-zinc-600 mt-2">
+                EXP
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Daily Step Count Section */}
         <Card className="bg-white/90 backdrop-blur-sm border-[#7bc950]/30">
           <CardHeader>
