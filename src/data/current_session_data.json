@@ -1,28 +1,28 @@
 {
   "session": {
-    "huntId": "hunt_1768757606",
+    "huntId": "hunt_1768758389",
     "startLocation": {
-      "lat": 49.26228422604691,
-      "lng": -123.24521040456499
+      "lat": 49.262228693913045,
+      "lng": -123.24523887045392
     },
     "radiusMeters": 2000,
     "category": "Cafe",
     "currentQuestIndex": 0,
     "totalPoints": 0,
-    "startedAt": "2026-01-18T17:33:26.423270Z",
-    "updatedAt": "2026-01-18T17:33:26.423270Z"
+    "startedAt": "2026-01-18T17:46:29.257887Z",
+    "updatedAt": "2026-01-18T17:46:29.257887Z"
   },
   "quests": [
     {
       "id": "quest_1",
-      "sessionId": "hunt_1768757606",
-      "name": "Starbucks",
+      "sessionId": "hunt_1768758389",
+      "name": "Loafe Café - Sauder UBC",
       "location": {
-        "lat": 49.25469,
-        "lng": -123.23651
+        "lat": 49.2648641,
+        "lng": -123.2536411
       },
       "category": "Cafe",
-      "riddle": "Where steaming cups bring comfort near,\nAnd ancient spirits banish fear.\nBeside the arch, both strong and clear,\nYour journey's ending, right in here.",
+      "riddle": "Hark, seeker, for your path winds true,\nWhere futures gleam, and dreams are new.\nWithin these walls, a fragrant brew,\nAnd sweet delights await for you.",
       "status": "active",
       "points": 100,
       "order": 1,
@@ -30,11 +30,11 @@
     },
     {
       "id": "quest_2",
-      "sessionId": "hunt_1768757606",
-      "name": "Starbucks",
+      "sessionId": "hunt_1768758389",
+      "name": "Loafe Café - Alumni Centre UBC",
       "location": {
-        "lat": 49.2658923,
-        "lng": -123.242755
+        "lat": 49.26581849999999,
+        "lng": -123.2501398
       },
       "category": "Cafe",
       "riddle": null,
@@ -45,11 +45,11 @@
     },
     {
       "id": "quest_3",
-      "sessionId": "hunt_1768757606",
-      "name": "Great Dane Coffee",
+      "sessionId": "hunt_1768758389",
+      "name": "The Original Beanery Coffee House",
       "location": {
-        "lat": 49.2700544,
-        "lng": -123.2507727
+        "lat": 49.2636905,
+        "lng": -123.2393097
       },
       "category": "Cafe",
       "riddle": null,
@@ -60,11 +60,11 @@
     },
     {
       "id": "quest_4",
-      "sessionId": "hunt_1768757606",
-      "name": "Agora Eats Café",
+      "sessionId": "hunt_1768758389",
+      "name": "Only U Cafe",
       "location": {
-        "lat": 49.2610566,
-        "lng": -123.2512167
+        "lat": 49.2659946,
+        "lng": -123.242398
       },
       "category": "Cafe",
       "riddle": null,
