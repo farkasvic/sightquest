@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { UserButton } from "@clerk/nextjs";
-import { Menu, Play, Loader2 } from "lucide-react";
+import { Menu, Loader2 } from "lucide-react";
+import Image from "next/image";
+import { NavItem } from "@/components/nav-item";
 import {
   Sheet,
   SheetContent,
@@ -171,7 +173,7 @@ export default function ExplorePage() {
       )}
 
       {/* Navigation Bar */}
-      <nav className="relative z-10 flex items-center justify-between px-4 py-4 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-[#7bc950]/20">
+      <nav className="relative z-10 flex items-center justify-between px-3 py-3 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-[#7bc950]/20">
         {/* Hamburger Menu */}
         <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
           <SheetTrigger asChild>
@@ -184,47 +186,21 @@ export default function ExplorePage() {
               <span className="sr-only">Open menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[280px] bg-white dark:bg-zinc-900">
-            <SheetHeader>
-              <SheetTitle className="text-[#7bc950]">Menu</SheetTitle>
+          <SheetContent side="left" className="w-[280px] bg-white dark:bg-zinc-900 p-0 [&>button]:text-white [&>button]:hover:text-white/80">
+            <SheetHeader className="sr-only">
+              <SheetTitle>Navigation Menu</SheetTitle>
               <SheetDescription>Navigate your adventure</SheetDescription>
             </SheetHeader>
-            <div className="mt-8 flex flex-col gap-4">
-              <Button
-                variant="ghost"
-                className="justify-start text-left hover:bg-[#b6efd4]/20 hover:text-[#7bc950]"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                🏠 Home
-              </Button>
-              <Button
-                variant="ghost"
-                className="justify-start text-left hover:bg-[#b6efd4]/20 hover:text-[#7bc950]"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                🗺️ Active Quests
-              </Button>
-              <Button
-                variant="ghost"
-                className="justify-start text-left hover:bg-[#b6efd4]/20 hover:text-[#7bc950]"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                🏆 Passport
-              </Button>
-              <Button
-                variant="ghost"
-                className="justify-start text-left hover:bg-[#b6efd4]/20 hover:text-[#7bc950]"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                ⚙️ Settings
-              </Button>
-              <Button
-                variant="ghost"
-                className="justify-start text-left hover:bg-[#b6efd4]/20 hover:text-[#7bc950]"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                📊 Leaderboard
-              </Button>
+            <div className="bg-[#7bc950] p-6">
+              <h2 className="text-xl font-semibold text-white">Menu</h2>
+              <p className="text-sm text-white/90 mt-1">Navigate your adventure</p>
+            </div>
+            <div className="p-6 flex flex-col gap-2">
+              <NavItem label="Home" onClick={() => setIsMenuOpen(false)} />
+              <NavItem label="Active Quests" onClick={() => setIsMenuOpen(false)} />
+              <NavItem label="Passport" onClick={() => setIsMenuOpen(false)} />
+              <NavItem label="Settings" onClick={() => setIsMenuOpen(false)} />
+              <NavItem label="Leaderboard" onClick={() => setIsMenuOpen(false)} />
             </div>
           </SheetContent>
         </Sheet>
@@ -240,7 +216,8 @@ export default function ExplorePage() {
         <UserButton
           appearance={{
             elements: {
-              avatarBox: "w-10 h-10",
+              avatarBox: "w-15 h-15",
+              avatarImage: "w-15 h-15",
             },
           }}
         />
@@ -250,9 +227,15 @@ export default function ExplorePage() {
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20">
         <Button
           size="icon"
-          className="h-20 w-20 rounded-full bg-[#7bc950] hover:bg-[#7ce577] shadow-2xl shadow-[#7bc950]/50 transition-all hover:scale-110 active:scale-95"
+          className="h-20 w-20 rounded-full bg-white hover:bg-[#b6efd4] shadow-2xl shadow-[#7bc950]/50 transition-all hover:scale-110 active:scale-95 p-0"
         >
-          <Play className="h-10 w-10 text-white fill-white ml-1" />
+          <Image 
+            src="/play.svg" 
+            alt="Play" 
+            width={80} 
+            height={80}
+            className="w-full h-full"
+          />
           <span className="sr-only">Start quest</span>
         </Button>
         <p className="text-center mt-3 text-sm font-medium text-white drop-shadow-lg">
