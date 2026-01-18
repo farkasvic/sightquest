@@ -8,7 +8,7 @@ import Image from "next/image";
 import { NavItem } from "@/components/nav-item";
 import { CategoryCard } from "@/components/category-card";
 import { QuestCompleteDialog } from "@/components/quest-complete-dialog";
-import { getCurrentSession, startSession, getLandmarks, getRiddle, generateAllRiddles, verifyImage } from "@/lib/api";
+import { getCurrentSession, startSession, getLandmarks, getRiddle, generateAllRiddles, verifyImage, toggleGodMode } from "@/lib/api";
 import {
   Sheet,
   SheetContent,
@@ -33,10 +33,12 @@ export default function ExplorePage() {
   const [locationCount, setLocationCount] = useState(3);
   const [isQuestActive, setIsQuestActive] = useState(false);
   const [isGeneratingRiddles, setIsGeneratingRiddles] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(false);
   const [riddles, setRiddles] = useState<string[]>([]);
   const [currentRiddleIndex, setCurrentRiddleIndex] = useState(0);
   const [solvedRiddles, setSolvedRiddles] = useState<Set<number>>(new Set());
   const [locations, setLocations] = useState<Array<{name: string, description: string, image: string}>>([]);
+  const [capturedImages, setCapturedImages] = useState<{[key: number]: string}>({});
   const [questLocations, setQuestLocations] = useState<Array<{lat: number, lng: number}>>([]);
   const [isQuestCompleteOpen, setIsQuestCompleteOpen] = useState(false);
   const [questStats, setQuestStats] = useState({ steps: 0, stamps: 0, exp: 0 });
@@ -47,21 +49,6 @@ export default function ExplorePage() {
   const userMarkerRef = useRef<google.maps.Marker | null>(null);
   const questMarkersRef = useRef<google.maps.Marker[]>([]);
 
-  // Test backend connection
-  // useEffect(() => {
-  //   async function testBackendConnection() {
-  //     try {
-  //       console.log('🔄 Testing backend connection...');
-  //       const session = await getCurrentSession();
-  //       console.log('✅ Backend connected successfully!');
-  //       console.log('📦 Current session data:', session);
-  //     } catch (error) {
-  //       console.error('❌ Backend connection failed:', error);
-  //       console.error('Make sure backend is running on http://localhost:8000');
-  //     }
-  //   }
-  //   testBackendConnection();
-  // }, []);
 
   const generateRiddles = (category: string, count: number): string[] => {
     const riddleTemplates: Record<string, string[]> = {
@@ -238,11 +225,24 @@ export default function ExplorePage() {
     try {
       console.log("📸 Photo captured, verifying...");
       
+      // Convert image to base64 for display
+      const imageUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+      
       // Call the verify-image endpoint
       const result = await verifyImage(file, userLocation.lat, userLocation.lng);
       
       if (result.success) {
         console.log("✅ Location verified!");
+        
+        // Store the captured image
+        setCapturedImages(prev => ({
+          ...prev,
+          [currentRiddleIndex]: imageUrl
+        }));
         
         // Mark riddle as solved
         setSolvedRiddles(prev => new Set([...prev, currentRiddleIndex]));
@@ -259,6 +259,17 @@ export default function ExplorePage() {
     } catch (error) {
       console.error("Error verifying photo:", error);
       alert("Failed to verify photo. Please try again.");
+    }
+  };
+
+  const handleDemoModeToggle = async () => {
+    try {
+      const newDemoMode = !isDemoMode;
+      await toggleGodMode(newDemoMode);
+      setIsDemoMode(newDemoMode);
+      console.log(`🎮 Demo Mode ${newDemoMode ? 'ON' : 'OFF'}`);
+    } catch (error) {
+      console.error("Failed to toggle demo mode:", error);
     }
   };
 
@@ -408,10 +419,10 @@ export default function ExplorePage() {
     // Create circle markers for each quest location
     questLocations.forEach((coords, index) => {
       const circle = new google.maps.Circle({
-        strokeColor: solvedRiddles.has(index) ? '#7bc950' : '#FFA500',
+        strokeColor: solvedRiddles.has(index) ? '#3B82F6' : '#FFA500',
         strokeOpacity: 0.6,
         strokeWeight: 2,
-        fillColor: solvedRiddles.has(index) ? '#7bc950' : '#FFA500',
+        fillColor: solvedRiddles.has(index) ? '#3B82F6' : '#FFA500',
         fillOpacity: 0.4,
         map: googleMapRef.current,
         center: { lat: coords.lat, lng: coords.lng },
@@ -490,15 +501,30 @@ export default function ExplorePage() {
           </h1>
         </div>
 
-        {/* Profile Avatar */}
-        <UserButton
-          appearance={{
-            elements: {
-              avatarBox: "w-15 h-15",
-              avatarImage: "w-15 h-15",
+        {/* Demo Mode Toggle & Profile Avatar */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant={isDemoMode ? "default" : "outline"}
+            size="sm"
+            onClick={handleDemoModeToggle}
+            className={isDemoMode 
+              ? "bg-amber-500 hover:bg-amber-600 text-white border-amber-500"
+              : "border-amber-500 text-amber-600 hover:bg-amber-50"
+            }
+          >
+            🎮 {isDemoMode ? "Demo ON" : "Demo OFF"}
+          </Button>
+          
+          {/* Profile Avatar */}
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: "w-15 h-15",
+                avatarImage: "w-15 h-15",
             },
           }}
         />
+        </div>
       </nav>
 
       {/* Large Play Button at Bottom Center */}
@@ -544,7 +570,7 @@ export default function ExplorePage() {
                     {/* Location Image - Left */}
                     <div className="relative w-1/2 h-full min-h-[200px] rounded-lg overflow-hidden flex-shrink-0">
                       <Image
-                        src={locations[currentRiddleIndex]?.image || '/category_photo/restaurant.jpg'}
+                        src={capturedImages[currentRiddleIndex] || locations[currentRiddleIndex]?.image || '/category_photo/restaurant.jpg'}
                         alt={locations[currentRiddleIndex]?.name || 'Location'}
                         fill
                         className="object-cover"

@@ -106,6 +106,14 @@ export async function getStats() {
   return response.json();
 }
 
+// Demo Mode
+export async function toggleGodMode(enable: boolean) {
+  const response = await fetch(`${API_URL}/toggle-god-mode?enable=${enable}`, {
+    method: 'POST',
+  });
+  return response.json();
+}
+
 // Landmarks Search
 export async function getLandmarks(
   lat: number,

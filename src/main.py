@@ -60,11 +60,14 @@ else:
 # Initialize Client
 ai_client = genai.Client(api_key=api_key)
 
-# MongoDB Config
-MONGO_URI = "mongodb+srv://farkasv_db_user:SW3aDB0E91ARyPdz@513cluster.lyvt3gy.mongodb.net/"
-client = MongoClient(MONGO_URI)
-db = client["cityquest_db"]
-users_collection = db["users"]
+# MongoDB Config - Disabled for faster responses during demo
+# MONGO_URI = "mongodb+srv://farkasv_db_user:SW3aDB0E91ARyPdz@513cluster.lyvt3gy.mongodb.net/"
+# client = MongoClient(MONGO_URI)
+# db = client["cityquest_db"]
+# users_collection = db["users"]
+
+# Mock MongoDB collections (no database connection)
+users_collection = None
 
 # Game Constants
 UNLOCK_RADIUS_METERS = 50
@@ -141,22 +144,12 @@ def advance_quest_stage(game_data):
 
 # --- DATABASE HELPERS ---
 def get_current_user():
-    try:
-        user = users_collection.find_one({"_id": "demo_user"})
-        if not user:
-            user = {"_id": "demo_user", "stamps": [], "badges": []}
-            users_collection.insert_one(user)
-        return user
-    except Exception as e:
-        print(f"⚠️ MongoDB Error: {e}")
-        # Return mock user if DB fails
-        return {"_id": "demo_user", "stamps": [], "badges": []}
+    # MongoDB disabled - return mock user for faster responses
+    return {"_id": "demo_user", "stamps": [], "badges": []}
 
 def update_user_data(user_data):
-    try:
-        users_collection.replace_one({"_id": "demo_user"}, user_data)
-    except Exception as e:
-        print(f"⚠️ MongoDB Error: {e}")
+    # MongoDB disabled - no-op
+    pass
 
 def process_stamp_logic(poi_name, category):
     try:

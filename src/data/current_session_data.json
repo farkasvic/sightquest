@@ -1,29 +1,30 @@
 {
   "session": {
-    "huntId": "hunt_1768762319",
+    "huntId": "hunt_1768763370",
     "startLocation": {
-      "lat": 49.262080070949246,
-      "lng": -123.24539689143444
+      "lat": 49.26207263882109,
+      "lng": -123.24538595409598
     },
     "radiusMeters": 2000,
     "category": "Food",
     "currentQuestIndex": 0,
     "totalPoints": 0,
-    "startedAt": "2026-01-18T18:51:59.837955Z",
-    "updatedAt": "2026-01-18T18:51:59.837955Z"
+    "startedAt": "2026-01-18T19:09:30.969192Z",
+    "updatedAt": "2026-01-18T19:09:30.969192Z",
+    "completedAt": "2026-01-18T19:09:56.406735"
   },
   "quests": [
     {
       "id": "quest_1",
-      "sessionId": "hunt_1768762319",
-      "name": "Browns Crafthouse UBC",
+      "sessionId": "hunt_1768763370",
+      "name": "Firehouse Subs Vancouver UBC",
       "location": {
-        "lat": 49.2661875,
-        "lng": -123.2488395
+        "lat": 49.2610689,
+        "lng": -123.2463886
       },
       "category": "Food",
-      "riddle": "Where weary minds their solace **seek**,\nAnd golden libations softly **speak**.\nNear the grand gathering's central **heart**,\nFor hunger's plea, a brand new **start**.",
-      "status": "active",
+      "riddle": "Hark, seeker of sustenance and savory delight!\nWhere hunger calls, and warmth you seek to *find*,\nA sizzling bounty, crafted one of a *kind*,\nBeneath the wing where student minds *convene*,\nThere waits a fiery comfort, for a hungry *scene*.",
+      "status": "completed",
       "points": 100,
       "order": 1,
       "awardedPoints": 0
