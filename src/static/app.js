@@ -17,6 +17,21 @@ let userMarker;
 let originLocation = null; // store the user’s starting point
 let originMarker;
 
+const CATEGORY_MAP = {
+  Park: {
+    label: "🏞️ Park",
+    types: ["tourist_attraction", "park", "natural_feature"],
+  },
+  History: {
+    label: "🏛️ History",
+    types: ["tourist_attraction", "museum", "church"],
+  },
+  Food: {
+    label: "🍔 Food",
+    types: ["restaurant", "cafe", "bakery"],
+  },
+};
+
 function initMap(lat, lng) {
   if (!map) {
     // First time → create map and marker
@@ -35,6 +50,10 @@ function initMap(lat, lng) {
     userMarker.setPosition({ lat, lng });
     map.panTo({ lat, lng });
   }
+}
+
+function getSelectedCategory() {
+  return document.getElementById("category").value;
 }
 
 // 2. Send GPS to Python Backend
@@ -112,9 +131,12 @@ async function getRandomLandmarks(
   count = 4,
 ) {
   try {
+    const category = getSelectedCategory();
+    console.log("Selected category:", category);
+
     // Call your backend instead of Google directly
     const response = await fetch(
-      `/get-landmarks?lat=${originLat}&lng=${originLng}&radius=${radius}`,
+      `/get-landmarks?lat=${originLat}&lng=${originLng}&radius=${radius}&category=${category}`,
     );
     const data = await response.json();
 

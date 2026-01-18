@@ -49,6 +49,14 @@ BADGE_RULES = {
     "Historian": {"category": "History", "count": 3},
     "Foodie": {"category": "Food", "count": 3}
 }
+
+CATEGORY_KEYWORDS = {
+    "Park": "park garden trail",
+    "History": "tourist_attraction point_of_interest art_gallery historic monument church",
+    "Food": "restaurant cafe bakery food"
+}
+
+
 GOOGLE_API_KEY = "AIzaSyC_SY-hHyH0FqMRqEv1VKa0gV1b4bqPrDk"
 
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
@@ -277,24 +285,25 @@ def get_landmarks(
     lat: float = Query(...),
     lng: float = Query(...),
     radius: int = Query(2000),
-    types: str = Query("tourist_attraction|point_of_interest|museum|park|restaurant")
+    category: str = Query("Park")
 ):
-    """
-    Returns nearby landmarks using Google Places REST API.
-    """
-    url = (
-        f"https://maps.googleapis.com/maps/api/place/nearbysearch/json"
-        f"?location={lat},{lng}&radius={radius}&type={types}&key={GOOGLE_API_KEY}"
-    )
+    keyword = CATEGORY_KEYWORDS.get(category, "tourist attraction")
+
+    url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
+    params = {
+        "location": f"{lat},{lng}",
+        "radius": radius,
+        "keyword": keyword,
+        "key": GOOGLE_API_KEY,
+    }
 
     try:
-        r = requests.get(url)
+        r = requests.get(url, params=params)
         r.raise_for_status()
-        data = r.json()
-        return data
+        return r.json()
     except requests.RequestException as e:
         return {"error": str(e)}
-    
+        
 @app.post("/collect-stamp")
 def collect_stamp(stamp: StampRequest):
     # Simplified to use the helper function
