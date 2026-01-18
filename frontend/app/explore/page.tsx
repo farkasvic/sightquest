@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { UserButton } from "@clerk/nextjs";
-import { Menu, Loader2, Plus, Minus, ChevronLeft, ChevronRight, MapPin, X } from "lucide-react";
+import { Menu, Loader2, Plus, Minus, ChevronLeft, ChevronRight, MapPin, X, Camera } from "lucide-react";
 import Image from "next/image";
 import { NavItem } from "@/components/nav-item";
 import { CategoryCard } from "@/components/category-card";
+import { QuestCompleteDialog } from "@/components/quest-complete-dialog";
 import {
   Sheet,
   SheetContent,
@@ -32,6 +33,9 @@ export default function ExplorePage() {
   const [isQuestActive, setIsQuestActive] = useState(false);
   const [riddles, setRiddles] = useState<string[]>([]);
   const [currentRiddleIndex, setCurrentRiddleIndex] = useState(0);
+  const [isQuestCompleteOpen, setIsQuestCompleteOpen] = useState(false);
+  const [questStats, setQuestStats] = useState({ steps: 0, stamps: 0, exp: 0 });
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const googleMapRef = useRef<google.maps.Map | null>(null);
   const userMarkerRef = useRef<google.maps.Marker | null>(null);
@@ -84,6 +88,19 @@ export default function ExplorePage() {
     setRiddles(generatedRiddles);
     setCurrentRiddleIndex(0);
     setIsQuestActive(true);
+  };
+
+  const handleCameraClick = () => {
+    cameraInputRef.current?.click();
+  };
+
+  const handlePhotoCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // TODO: Process the captured photo (send to Gemini Vision API for verification)
+      console.log("Photo captured:", file);
+      // For now, just log the file. Later, this will verify the location
+    }
   };
 
   useEffect(() => {
@@ -178,18 +195,6 @@ export default function ExplorePage() {
             });
 
             userMarkerRef.current = userMarker;
-
-            // Add circle around user location (search radius visualization)
-            // new google.maps.Circle({
-            //   map: map,
-            //   center: userLocation,
-            //   radius: 1000, // 1km radius
-            //   fillColor: "#7bc950",
-            //   fillOpacity: 0.1,
-            //   strokeColor: "#7bc950",
-            //   strokeOpacity: 0.4,
-            //   strokeWeight: 2,
-            // });
 
             setIsMapLoading(false);
           },
@@ -347,6 +352,25 @@ export default function ExplorePage() {
                   </div>
                 </div>
 
+                {/* Camera Button */}
+                <div className="w-full max-w-md">
+                  <input
+                    ref={cameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handlePhotoCapture}
+                    className="hidden"
+                  />
+                  <Button
+                    onClick={handleCameraClick}
+                    className="w-full bg-[#7bc950] hover:bg-[#7ce577] text-white py-6 text-lg font-semibold rounded-xl shadow-lg"
+                  >
+                    <Camera className="h-6 w-6 mr-2" />
+                    Take Photo to Verify
+                  </Button>
+                </div>
+
                 {/* Navigation Controls */}
                 <div className="flex items-center gap-2">
                   <Button
@@ -386,12 +410,12 @@ export default function ExplorePage() {
                   variant="destructive"
                   size="sm"
                   onClick={() => {
-                    setIsQuestActive(false);
-                    setRiddles([]);
-                    setCurrentRiddleIndex(0);
-                    setSelectedCategory(null);
-                    setLocationCount(3);
-                    setIsCategoryDialogOpen(false);
+                    // Generate mock quest stats
+                    const mockSteps = Math.floor(Math.random() * 3000) + 1500; // 1500-4500 steps
+                    const mockStamps = Math.floor(Math.random() * locationCount) + 1; // 1 to locationCount stamps
+                    const mockExp = mockStamps * 100 + Math.floor(Math.random() * 50); // 100 exp per stamp + bonus
+                    setQuestStats({ steps: mockSteps, stamps: mockStamps, exp: mockExp });
+                    setIsQuestCompleteOpen(true);
                   }}
                 >
                   End Quest
@@ -490,6 +514,23 @@ export default function ExplorePage() {
           )}
         </DrawerContent>
       </Drawer>
+
+      {/* Quest Complete Dialog */}
+      <QuestCompleteDialog
+        open={isQuestCompleteOpen}
+        onOpenChange={setIsQuestCompleteOpen}
+        questStats={questStats}
+        locationCount={locationCount}
+        onContinue={() => {
+          setIsQuestCompleteOpen(false);
+          setIsQuestActive(false);
+          setRiddles([]);
+          setCurrentRiddleIndex(0);
+          setSelectedCategory(null);
+          setLocationCount(3);
+          setIsCategoryDialogOpen(false);
+        }}
+      />
     </div>
   );
 }

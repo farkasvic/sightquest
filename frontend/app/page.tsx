@@ -110,32 +110,25 @@ export default function Home() {
 
           <SignedIn>
             {/* Dashboard for signed-in users */}
-            <Card className="border-[#7bc950]/30 bg-white/70 dark:bg-zinc-800/70 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-2xl">Welcome back, Explorer!</CardTitle>
-                <CardDescription>
-                  Ready to continue your adventure?
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Link href="/explore">
+            <div className="flex justify-center">
+              <Card className="border-[#7bc950]/30 bg-white/70 dark:bg-zinc-800/70 backdrop-blur-sm max-w-md w-full">
+                <CardHeader>
+                  <CardTitle className="text-2xl text-center">Welcome back, Explorer!</CardTitle>
+                  <CardDescription className="text-center">
+                    Ready to continue your adventure?
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Link href="/explore" className="block">
                     <Button className="bg-[#7bc950] hover:bg-[#7ce577] text-white dark:bg-[#7bc950] dark:hover:bg-[#7ce577] h-auto py-4 w-full">
-                      <div className="flex flex-col items-start gap-1">
+                      <div className="flex flex-col items-center gap-1">
                         <span className="font-semibold">Start New Quest</span>
-                        <span className="text-xs opacity-90">Find new locations nearby</span>
                       </div>
                     </Button>
                   </Link>
-                  <Button variant="outline" className="h-auto py-4 border-[#a0ccda] text-[#7bc950] hover:bg-[#b6efd4]/20 dark:border-[#9cffd9] dark:text-[#7ce577]">
-                    <div className="flex flex-col items-start gap-1">
-                      <span className="font-semibold">View Passport</span>
-                      <span className="text-xs">See your collected stamps</span>
-                    </div>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </SignedIn>
         </div>
       </main>
