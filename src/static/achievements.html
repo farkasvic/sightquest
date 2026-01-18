@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Achievements - CityQuest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#18181b",
+            },
+          },
+        },
+      };
+    </script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .gradient-text {
+        background: linear-gradient(to right, #4f46e5, #9333ea);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen pb-20">
+    <header
+      class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b px-6 py-4"
+    >
+      <div class="max-w-md mx-auto flex items-center justify-between">
+        <h1 class="text-xl font-bold tracking-tight">Your Legacy</h1>
+        <a href="/" class="text-sm font-medium text-gray-500 hover:text-black"
+          >← Back to Map</a
+        >
+      </div>
+    </header>
+
+    <main class="max-w-md mx-auto p-4 space-y-6">
+      <div
+        class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center"
+      >
+        <div class="inline-block p-3 rounded-full bg-indigo-50 text-3xl mb-2">
+          🦄
+        </div>
+        <h2 class="text-gray-500 text-xs font-bold uppercase tracking-widest">
+          Total Experience
+        </h2>
+        <div
+          class="text-5xl font-extrabold text-gray-900 mt-1 mb-4"
+          id="total-xp"
+        >
+          ---
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 border-t pt-4">
+          <div>
+            <p class="text-2xl font-bold text-gray-900" id="total-badges">--</p>
+            <p class="text-xs text-gray-400 font-medium uppercase">Badges</p>
+          </div>
+          <div>
+            <p class="text-2xl font-bold text-gray-900" id="total-quests">--</p>
+            <p class="text-xs text-gray-400 font-medium uppercase">Quests</p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="text-lg font-bold text-gray-900 mb-3 px-1">
+          Badge Collection
+        </h3>
+        <div class="grid grid-cols-3 gap-3" id="badge-grid">
+          <div class="aspect-square rounded-xl bg-gray-200 animate-pulse"></div>
+          <div class="aspect-square rounded-xl bg-gray-200 animate-pulse"></div>
+          <div class="aspect-square rounded-xl bg-gray-200 animate-pulse"></div>
+        </div>
+      </div>
+
+      <div
+        class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+      >
+        <div class="px-6 py-4 border-b border-gray-50 bg-gray-50/50">
+          <h3 class="font-bold text-gray-900">Top Explorers</h3>
+        </div>
+        <div id="leaderboard-list" class="divide-y divide-gray-100">
+          <div class="p-4 text-center text-sm text-gray-400">
+            Loading rankings...
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      // CONFIG: All possible badges (Locked state logic)
+      const ALL_BADGES = [
+        { name: "Ranger", icon: "🌲", desc: "Visit 3 Parks" },
+        { name: "Historian", icon: "📜", desc: "Visit 3 Landmarks" },
+        { name: "Foodie", icon: "🍔", desc: "Visit 3 Restaurants" },
+        { name: "NightOwl", icon: "🌙", desc: "Quest at night" },
+        { name: "Sprinter", icon: "⚡️", desc: "Quest < 10 mins" },
+        { name: "Socialite", icon: "🤝", desc: "Invite a friend" },
+      ];
+
+      async function loadStats() {
+        try {
+          // 1. Fetch Data
+          const resStats = await fetch("/stats");
+          const stats = await resStats.json();
+
+          const resProfile = await fetch("/my-profile");
+          const profile = await resProfile.json();
+
+          // 2. Render Hero Stats
+          document.getElementById("total-xp").innerText = stats.xp;
+          document.getElementById("total-badges").innerText =
+            stats.total_badges;
+          document.getElementById("total-quests").innerText =
+            stats.total_quests;
+
+          // 3. Render Badges (Locked vs Unlocked)
+          const badgeGrid = document.getElementById("badge-grid");
+          badgeGrid.innerHTML = "";
+
+          ALL_BADGES.forEach((badge) => {
+            const isUnlocked = profile.badges.includes(badge.name);
+
+            const el = document.createElement("div");
+            el.className = `aspect-square rounded-xl flex flex-col items-center justify-center p-2 text-center border transition-all ${
+              isUnlocked
+                ? "bg-white border-indigo-100 shadow-sm scale-100 opacity-100"
+                : "bg-gray-50 border-gray-100 grayscale opacity-50"
+            }`;
+
+            el.innerHTML = `
+                        <div class="text-3xl mb-1">${badge.icon}</div>
+                        <div class="text-[10px] font-bold ${isUnlocked ? "text-indigo-900" : "text-gray-400"}">${badge.name}</div>
+                    `;
+            badgeGrid.appendChild(el);
+          });
+
+          // 4. Render Leaderboard
+          const lbList = document.getElementById("leaderboard-list");
+          lbList.innerHTML = "";
+
+          stats.leaderboard.forEach((player) => {
+            const isMe = player.is_me;
+            const row = document.createElement("div");
+            row.className = `flex items-center justify-between p-4 ${isMe ? "bg-indigo-50" : "bg-white"}`;
+
+            row.innerHTML = `
+                        <div class="flex items-center gap-4">
+                            <span class="font-mono font-bold text-gray-400 w-4 text-center">${player.rank}</span>
+                            <div class="h-8 w-8 rounded-full bg-white border flex items-center justify-center shadow-sm text-lg">
+                                ${player.avatar}
+                            </div>
+                            <span class="font-medium ${isMe ? "text-indigo-900 font-bold" : "text-gray-700"}">
+                                ${player.name} ${isMe ? "(You)" : ""}
+                            </span>
+                        </div>
+                        <span class="font-bold font-mono text-sm ${isMe ? "text-indigo-600" : "text-gray-400"}">
+                            ${player.xp} XP
+                        </span>
+                    `;
+            lbList.appendChild(row);
+          });
+        } catch (e) {
+          console.error("Error loading stats:", e);
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", loadStats);
+    </script>
+  </body>
+</html>

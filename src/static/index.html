@@ -2,125 +2,73 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CityQuest</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>SightQuest</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              border: "hsl(var(--border))",
+              background: "hsl(var(--background))",
+              foreground: "hsl(var(--foreground))",
+              primary: {
+                DEFAULT: "#18181b", // Zinc-900 (Matches your primary)
+                foreground: "#fafafa",
+              },
+              secondary: {
+                DEFAULT: "#f4f4f5", // Zinc-100
+                foreground: "#18181b",
+              },
+              accent: {
+                DEFAULT: "#f4f4f5",
+                foreground: "#18181b",
+              },
+            },
+            borderRadius: {
+              lg: "0.625rem",
+              md: "calc(0.625rem - 2px)",
+              sm: "calc(0.625rem - 4px)",
+            },
+          },
+        },
+      };
+    </script>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
       body {
-        font-family: sans-serif;
-        text-align: center;
-        padding: 20px;
-        background: #f0f2f5;
-      }
-      .card {
-        background: white;
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px; /* Space between cards */
-      }
-      h1 {
-        font-size: 24px;
-        margin-bottom: 10px;
-      }
-      h2 {
-        font-size: 18px;
-        margin-top: 0;
-        color: #555;
-        border-bottom: 2px solid #eee;
-        padding-bottom: 10px;
-      }
-      #status {
-        font-weight: bold;
-        color: #666;
-      }
-      #distance {
-        font-size: 48px;
-        color: #333;
-        display: block;
-        margin: 20px 0;
+        font-family: "Inter", sans-serif;
+        background-color: #ffffff;
+        color: #09090b;
       }
 
-      /* Buttons */
-      button {
-        background-color: #ccc;
-        color: white;
-        border: none;
-        padding: 15px 30px;
-        font-size: 20px;
-        border-radius: 50px;
-        cursor: not-allowed;
-        width: 100%;
-        transition: 0.3s;
-        margin-bottom: 10px;
+      /* Smooth Animations */
+      .fade-in {
+        animation: fadeIn 0.5s ease-out;
       }
-      button.active {
-        background-color: #007bff;
-        cursor: pointer;
-        transform: scale(1.05);
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
 
-      /* Simulation Buttons (Small) */
-      .sim-btn {
-        width: auto;
-        font-size: 14px;
-        padding: 8px 15px;
-        border-radius: 8px;
-        cursor: pointer;
-        background-color: #6c757d;
-      }
-      .sim-btn:hover {
-        opacity: 0.8;
-      }
-
-      /* Passport Styles */
-      .badge {
-        display: inline-block;
-        padding: 5px 15px;
-        border-radius: 20px;
-        background: #ffd700;
-        color: #000;
-        font-weight: bold;
-        margin: 5px;
-        border: 2px solid orange;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        animation: popIn 0.5s ease;
-      }
-      .stamp-item {
-        border-bottom: 1px solid #eee;
-        padding: 10px;
-        text-align: left;
-        display: flex;
-        justify-content: space-between;
-      }
-      .stamp-cat {
-        font-size: 12px;
-        background: #eee;
-        padding: 2px 6px;
-        border-radius: 4px;
-        color: #666;
-      }
-
-      /* God Mode Button Style */
-      #god-mode-btn {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        width: 40px;
-        height: 40px;
-        background-color: #ffc107;
-        color: white;
-        border-radius: 50%;
-        font-size: 20px;
-        padding: 0;
-        cursor: pointer;
-        opacity: 0.3;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        z-index: 1000;
-      }
-      #god-mode-btn:hover {
-        opacity: 1;
-      }
-
+      /* Badge Pop Animation */
       @keyframes popIn {
         0% {
           transform: scale(0);
@@ -132,115 +80,195 @@
           transform: scale(1);
         }
       }
+      .badge-pop {
+        animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
     </style>
   </head>
-  <body>
-    <div class="card">
-      <h1>Current Objective</h1>
-      <p>Find the <b style="color: #d63384">Clock Tower</b></p>
+  <body class="bg-gray-50 min-h-screen pb-24">
+    <header
+      class="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md px-6 py-4"
+    >
+      <div class="flex items-center justify-between max-w-md mx-auto">
+        <div class="flex items-center gap-2">
+          <div
+            class="h-8 w-8 rounded-lg bg-black text-white flex items-center justify-center font-bold text-lg"
+          >
+            SQ
+          </div>
+          <span class="font-bold text-xl tracking-tight">SightQuest</span>
+        </div>
+        <div
+          id="status-badge"
+          class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200"
+        >
+          Connecting...
+        </div>
+        <a
+          href="/static/achievements.html"
+          class="flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-50 hover:bg-indigo-100 transition border border-indigo-100"
+        >
+          <span>🏆</span>
+          <span class="text-xs font-bold text-indigo-700">Rank</span>
+        </a>
+      </div>
+    </header>
+
+    <main class="max-w-md mx-auto p-4 space-y-6">
+      <div class="fade-in bg-white rounded-xl border shadow-sm overflow-hidden">
+        <div class="p-6 space-y-4">
+          <div class="flex justify-between items-start">
+            <div>
+              <p
+                class="text-sm text-gray-500 font-medium uppercase tracking-wider"
+              >
+                Current Objective
+              </p>
+              <h2 class="text-3xl font-bold tracking-tight mt-1 text-gray-900">
+                Find the <span class="text-indigo-600">Totem Pole</span>
+              </h2>
+            </div>
+          </div>
+
+          <div
+            class="relative overflow-hidden rounded-lg bg-indigo-50 border border-indigo-100 p-4"
+          >
+            <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+            <div class="flex gap-3">
+              <span class="text-xl">🔮</span>
+              <div>
+                <h3 class="text-xs font-bold text-indigo-900 uppercase mb-1">
+                  Oracle's Clue
+                </h3>
+                <p
+                  id="riddle-text"
+                  class="text-sm text-indigo-800 italic leading-relaxed"
+                >
+                  Summoning the Oracle...
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 pt-2">
+            <div
+              class="p-3 bg-gray-50 rounded-lg border border-gray-100 text-center"
+            >
+              <p class="text-xs text-gray-500 uppercase">Distance</p>
+              <p
+                id="distance"
+                class="text-2xl font-mono font-bold text-gray-900"
+              >
+                --- m
+              </p>
+            </div>
+            <div
+              class="p-3 bg-gray-50 rounded-lg border border-gray-100 text-center flex flex-col justify-center items-center"
+            >
+              <p class="text-xs text-gray-500 uppercase">Accuracy</p>
+              <p class="text-sm font-medium text-green-600">High GPS</p>
+            </div>
+          </div>
+
+          <input
+            type="file"
+            id="camera-input"
+            accept="image/*"
+            style="display: none"
+            onchange="processImage()"
+          />
+
+          <button
+            id="cam-btn"
+            onclick="document.getElementById('camera-input').click()"
+            disabled
+            class="w-full py-4 px-6 rounded-xl font-bold text-white shadow-md transition-all duration-200 bg-gray-300 cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            <span>📸</span>
+            <span id="btn-text">Get Closer to Unlock</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="fade-in bg-white rounded-xl border shadow-sm p-6">
+        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+          <span>🛂</span> My Passport
+        </h3>
+
+        <div
+          id="badges-container"
+          class="flex flex-wrap gap-2 mb-6 min-h-[40px]"
+        >
+          <span class="text-sm text-gray-400 italic py-2"
+            >No badges earned yet...</span
+          >
+        </div>
+
+        <div class="border-t border-gray-100 my-4"></div>
+
+        <div class="space-y-3" id="stamps-list">
+          <div class="text-center py-4">
+            <div
+              class="animate-spin h-5 w-5 border-2 border-gray-300 border-t-indigo-600 rounded-full mx-auto"
+            ></div>
+          </div>
+        </div>
+      </div>
 
       <div
-        style="
-          background: #eef;
-          padding: 15px;
-          border-radius: 10px;
-          margin: 15px 0;
-          border-left: 5px solid #6f42c1;
-          text-align: left;
-        "
+        class="bg-gray-50 rounded-xl border border-dashed border-gray-300 p-4 opacity-75 hover:opacity-100 transition-opacity"
       >
-        <small style="color: #6f42c1; font-weight: bold"
-          >🔮 ORACLE'S CLUE:</small
+        <h4 class="text-xs font-bold text-gray-500 uppercase mb-3">
+          Hackathon Demo Tools
+        </h4>
+        <div class="grid grid-cols-3 gap-2 mb-2">
+          <button
+            onclick="simulateFind('Stanley Park', 'Park')"
+            class="px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium hover:bg-gray-100 shadow-sm"
+          >
+            + Park 1
+          </button>
+          <button
+            onclick="simulateFind('Central Park', 'Park')"
+            class="px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium hover:bg-gray-100 shadow-sm"
+          >
+            + Park 2
+          </button>
+          <button
+            onclick="simulateFind('Queen E Park', 'Park')"
+            class="px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium hover:bg-gray-100 shadow-sm"
+          >
+            + Park 3
+          </button>
+        </div>
+        <button
+          onclick="resetPassport()"
+          class="w-full px-3 py-2 bg-red-50 text-red-600 border border-red-100 rounded-lg text-xs font-medium hover:bg-red-100"
         >
-        <p
-          id="riddle-text"
-          style="font-style: italic; margin-top: 5px; color: #444"
-        >
-          Summoning the Oracle...
-        </p>
+          🗑 Reset Database
+        </button>
       </div>
+    </main>
 
-      <span id="distance">--- m</span>
-      <p id="status">Waiting for GPS...</p>
-
-      <input
-        type="file"
-        id="camera-input"
-        accept="image/*"
-        capture="environment"
-        style="display: none"
-        onchange="processImage()"
-      />
-
-      <button
-        id="cam-btn"
-        onclick="document.getElementById('camera-input').click()"
-      >
-        📸 SNAP PHOTO
-      </button>
-    </div>
-
-    <div class="card">
-      <h2>My Passport</h2>
-      <div id="badges-container" style="min-height: 30px">
-        <small style="color: #999">No badges yet...</small>
-      </div>
-      <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee" />
-      <div id="stamps-list">
-        <small>Loading profile...</small>
-      </div>
-    </div>
-
-    <div
-      class="card"
-      style="background-color: #f8f9fa; border: 1px dashed #ccc"
+    <button
+      onclick="toggleGodMode()"
+      id="god-btn"
+      class="fixed bottom-6 right-6 h-12 w-12 bg-white text-yellow-500 rounded-full shadow-lg border border-gray-200 flex items-center justify-center text-xl z-50 hover:scale-110 transition-transform"
     >
-      <h3 style="margin-top: 0; font-size: 16px">Hackathon Demo Tools</h3>
-      <p style="font-size: 12px; margin-bottom: 10px">
-        Click these to simulate finding other parks and trigger the "Ranger"
-        badge.
-      </p>
-      <button
-        class="sim-btn"
-        style="background: #28a745"
-        onclick="simulateFind('Stanley Park', 'Park')"
-      >
-        + Park 1
-      </button>
-      <button
-        class="sim-btn"
-        style="background: #28a745"
-        onclick="simulateFind('Central Park', 'Park')"
-      >
-        + Park 2
-      </button>
-      <button
-        class="sim-btn"
-        style="background: #28a745"
-        onclick="simulateFind('Queen E Park', 'Park')"
-      >
-        + Park 3
-      </button>
-      <button
-        class="sim-btn"
-        style="background: #dc3545; margin-top: 10px"
-        onclick="resetPassport()"
-      >
-        🗑 Reset Passport
-      </button>
-    </div>
-
-    <button id="god-mode-btn" onclick="toggleGodMode()">⚡️</button>
+      ⚡️
+    </button>
 
     <script>
       // --- 1. CORE GPS LOGIC ---
-      function updateLocation() {
+      function startTracking() {
         if (!navigator.geolocation) {
-          document.getElementById("status").innerText = "GPS not supported";
+          document.getElementById("status-badge").innerText = "No GPS";
           return;
         }
-        navigator.geolocation.getCurrentPosition(sendPosition, showError, {
+        navigator.geolocation.watchPosition(sendPosition, showError, {
           enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 5000,
         });
       }
 
@@ -260,50 +288,70 @@
           // Update UI
           document.getElementById("distance").innerText =
             Math.round(data.distance_remaining) + " m";
-          document.getElementById("status").innerText = data.message;
 
+          const badge = document.getElementById("status-badge");
           const btn = document.getElementById("cam-btn");
-          // Logic: Enable button if close OR God Mode is on
+          const btnText = document.getElementById("btn-text");
+
           if (data.can_verify) {
-            btn.classList.add("active");
+            // UNLOCKED STATE
+            badge.innerText = "Target Nearby";
+            badge.className =
+              "px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200";
+
             btn.disabled = false;
+            btn.classList.remove("bg-gray-300", "cursor-not-allowed");
+            btn.classList.add(
+              "bg-black",
+              "hover:bg-gray-800",
+              "cursor-pointer",
+            ); // Primary Color
+            btnText.innerText = "Snap Photo";
           } else {
-            btn.classList.remove("active");
+            // LOCKED STATE
+            badge.innerText = "Searching...";
+            badge.className =
+              "px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200";
+
             btn.disabled = true;
+            btn.classList.add("bg-gray-300", "cursor-not-allowed");
+            btn.classList.remove(
+              "bg-black",
+              "hover:bg-gray-800",
+              "cursor-pointer",
+            );
+            btnText.innerText =
+              "Get Closer (" + Math.round(data.distance_remaining) + "m)";
           }
         } catch (error) {
-          console.error("Error talking to Python:", error);
+          console.error("API Error", error);
         }
       }
 
       function showError(error) {
-        document.getElementById("status").innerText =
-          "GPS Error: " + error.message;
+        document.getElementById("status-badge").innerText = "GPS Error";
       }
 
-      // --- 2. GAMEPLAY LOGIC (Image Verification) ---
-
+      // --- 2. IMAGE LOGIC ---
       async function processImage() {
         const input = document.getElementById("camera-input");
         if (input.files.length === 0) return;
 
         const file = input.files[0];
         const btn = document.getElementById("cam-btn");
+        const btnText = document.getElementById("btn-text");
 
-        // UI: Show Loading
-        const originalText = btn.innerText;
-        btn.innerText = "🤖 Analyzing...";
-        btn.disabled = true;
-        btn.style.backgroundColor = "#6f42c1"; // Purple for AI
+        // UI: Loading
+        const oldText = btnText.innerText;
+        btnText.innerText = "Analyzing...";
+        btn.classList.replace("bg-black", "bg-indigo-600"); // Purple loading state
 
-        // Convert Image to Base64
         const reader = new FileReader();
         reader.readAsDataURL(file);
 
         reader.onload = async function () {
           const base64String = reader.result;
 
-          // Get GPS location for final check
           navigator.geolocation.getCurrentPosition(async (position) => {
             try {
               const res = await fetch("/verify-image", {
@@ -322,136 +370,111 @@
                 alert("✅ MATCH CONFIRMED!\n" + data.message);
                 if (data.new_badge)
                   alert("🎉 BADGE UNLOCKED: " + data.new_badge);
-                loadProfile(); // Refresh Passport
+                loadProfile();
               } else {
                 alert("❌ " + data.message);
               }
             } catch (e) {
               console.error(e);
-              alert("Error uploading image.");
+              alert("Upload failed. Check console.");
             } finally {
-              // Reset Button UI
-              btn.innerText = originalText;
-              btn.disabled = false;
-              btn.style.backgroundColor = ""; // Reset color
-              input.value = ""; // Clear input so we can take another photo
+              // Reset UI
+              btnText.innerText = oldText;
+              btn.classList.replace("bg-indigo-600", "bg-black");
+              input.value = "";
             }
           });
         };
       }
 
-      // --- 3. DEMO/SIMULATION LOGIC ---
-      async function simulateFind(name, category) {
-        try {
-          const res = await fetch("/collect-stamp", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ poi_name: name, category: category }),
-          });
-          const data = await res.json();
-
-          if (data.new_badge) {
-            alert("🎉 BADGE UNLOCKED: " + data.new_badge + " 🎉");
-          } else {
-            alert(data.message);
-          }
-          loadProfile();
-        } catch (err) {
-          console.error("Failed to collect stamp", err);
-        }
-      }
-
-      // --- 4. PASSPORT UI LOGIC ---
+      // --- 3. PASSPORT LOGIC ---
       async function loadProfile() {
         try {
           const res = await fetch("/my-profile");
           const data = await res.json();
 
-          // Badges
+          // Render Badges
           const badgeDiv = document.getElementById("badges-container");
           badgeDiv.innerHTML = "";
           if (data.badges.length === 0) {
             badgeDiv.innerHTML =
-              '<small style="color:#999">No badges yet...</small>';
+              '<span class="text-sm text-gray-400 italic py-2">No badges yet...</span>';
           } else {
             data.badges.forEach((b) => {
-              badgeDiv.innerHTML += `<span class="badge">🏆 ${b}</span>`;
+              badgeDiv.innerHTML += `
+                <span class="badge-pop inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200 shadow-sm">
+                  🏆 ${b}
+                </span>`;
             });
           }
 
-          // Stamps
+          // Render Stamps
           const listDiv = document.getElementById("stamps-list");
           listDiv.innerHTML = "";
           if (data.stamps.length === 0) {
-            listDiv.innerHTML = "<small>No stamps collected.</small>";
+            listDiv.innerHTML =
+              '<div class="text-sm text-gray-400 text-center py-4">Your passport is empty.</div>';
           } else {
             data.stamps
               .slice()
               .reverse()
               .forEach((s) => {
                 listDiv.innerHTML += `
-                    <div class="stamp-item">
-                        <span><b>${s.name}</b></span> 
-                        <span class="stamp-cat">${s.category}</span>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                        <div class="flex items-center gap-3">
+                            <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-lg">📍</div>
+                            <div>
+                                <p class="text-sm font-bold text-gray-900">${s.name}</p>
+                                <p class="text-xs text-gray-500">${s.date}</p>
+                            </div>
+                        </div>
+                        <span class="px-2 py-1 rounded text-[10px] font-bold bg-gray-200 text-gray-600 uppercase tracking-wide">${s.category}</span>
                     </div>`;
               });
           }
         } catch (e) {
-          console.error("Profile load failed", e);
+          console.error("Profile Error", e);
         }
       }
 
-      // --- 5. EXTRAS ---
+      // --- 4. EXTRAS ---
+      async function simulateFind(name, category) {
+        await fetch("/collect-stamp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ poi_name: name, category: category }),
+        });
+        loadProfile();
+      }
+
       async function loadRiddle() {
         try {
           const res = await fetch("/get-riddle");
           const data = await res.json();
           document.getElementById("riddle-text").innerText = data.riddle;
-        } catch (e) {
-          console.error("Failed to load riddle");
-        }
+        } catch (e) {}
       }
 
       async function toggleGodMode() {
-        try {
-          const response = await fetch("/toggle-god-mode?enable=true", {
-            method: "POST",
-          });
-          alert("God Mode Enabled: You can now verify anywhere.");
-          updateLocation();
-        } catch (error) {
-          console.error("God Mode failed:", error);
-        }
+        await fetch("/toggle-god-mode?enable=true", { method: "POST" });
+        alert("⚡️ God Mode Enabled: Verification unlocked everywhere.");
+        document
+          .getElementById("god-btn")
+          .classList.add("ring-4", "ring-yellow-300");
       }
 
       async function resetPassport() {
-        if (!confirm("Are you sure? This will wipe all stamps.")) return;
+        if (!confirm("Reset everything?")) return;
         await fetch("/reset-db", { method: "POST" });
-        alert("Passport Cleared!");
         loadProfile();
       }
 
-      // --- INIT ---
+      // Init
       document.addEventListener("DOMContentLoaded", () => {
         loadProfile();
         loadRiddle();
-        startTracking(); // <--- New Function Call
+        startTracking();
       });
-
-      // New "Real-Time" Tracker
-      function startTracking() {
-        if (!navigator.geolocation) {
-          document.getElementById("status").innerText = "GPS not supported";
-          return;
-        }
-
-        // watchPosition fires EVERY time the phone detects movement
-        navigator.geolocation.watchPosition(sendPosition, showError, {
-          enableHighAccuracy: true, // Forces phone to use GPS (not just Wifi)
-          maximumAge: 0, // Don't use cached old positions
-          timeout: 5000, // If signal is lost, retry quickly
-        });
-      }
     </script>
   </body>
 </html>
