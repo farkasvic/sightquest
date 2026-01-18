@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { UserButton } from "@clerk/nextjs";
-import { Menu, Loader2, Plus, Minus, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
+import { Menu, Loader2, Plus, Minus, ChevronLeft, ChevronRight, MapPin, X } from "lucide-react";
 import Image from "next/image";
 import { NavItem } from "@/components/nav-item";
 import { CategoryCard } from "@/components/category-card";
@@ -257,19 +257,27 @@ export default function ExplorePage() {
               <span className="sr-only">Open menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[280px] bg-white dark:bg-zinc-900 p-0 [&>button]:text-white [&>button]:hover:text-white/80">
+          <SheetContent side="left" className="w-[280px] bg-white dark:bg-zinc-900 p-0 [&>button]:hidden">
             <SheetHeader className="sr-only">
               <SheetTitle>Navigation Menu</SheetTitle>
             </SheetHeader>
-            <div className="bg-[#7bc950] p-6">
+            <div className="bg-[#7bc950] p-6 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-white">Menu</h2>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-white h-10 w-10"
+                >
+                  <X className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
             </div>
             <div className="p-6 flex flex-col gap-2">
-              <NavItem label="Home" onClick={() => setIsMenuOpen(false)} />
-              <NavItem label="Active Quests" onClick={() => setIsMenuOpen(false)} />
-              <NavItem label="Passport" onClick={() => setIsMenuOpen(false)} />
-              <NavItem label="Settings" onClick={() => setIsMenuOpen(false)} />
+              <NavItem label="Home" href="/" onClick={() => setIsMenuOpen(false)} />
+              <NavItem label="Stats" href="/stats" onClick={() => setIsMenuOpen(false)} />
               <NavItem label="Leaderboard" onClick={() => setIsMenuOpen(false)} />
+              <NavItem label="Settings" onClick={() => setIsMenuOpen(false)} />
             </div>
           </SheetContent>
         </Sheet>
