@@ -1,5 +1,7 @@
 import json
 import os
+from pathlib import Path
+from dotenv import load_dotenv
 import base64
 import warnings
 from datetime import datetime
@@ -17,9 +19,28 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 app = FastAPI()
 
-# --- CONFIG ---
-os.environ["GEMINI_API_KEY"] = "AIzaSyAx6wv9QaoSGlLRHbpwK2W9uc7tLM2-mes"
-ai_client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+# --- ROBUST CONFIG (Fixes "Missing Key" errors) ---
+# 1. Find the .env file relative to this script (src/main.py)
+#    We go 'parent' (src) -> 'parent' (root) -> '.env'
+env_path = Path(__file__).parent.parent / '.env'
+
+# 2. Load it explicitly
+load_dotenv(dotenv_path=env_path)
+
+# 3. Get the key
+api_key = os.getenv("GEMINI_API_KEY")
+
+# 4. Debug Print (So you know if it worked)
+if not api_key:
+    print(f"⚠️ ERROR: Could not find .env file at: {env_path}")
+    print("⚠️ Make sure the file is named exactly '.env' (no .txt) and is in your project root.")
+    
+    raise ValueError("Stopping server: API Key is missing.")
+else:
+    print("✅ API Key loaded successfully!")
+
+# Initialize Client
+ai_client = genai.Client(api_key=api_key)
 
 # Global cache to save money/quota
 current_riddle_cache = {
