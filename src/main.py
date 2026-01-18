@@ -57,7 +57,7 @@ db = client["cityquest_db"]
 users_collection = db["users"]
 
 # Game Constants
-UNLOCK_RADIUS_METERS = 50 
+UNLOCK_RADIUS_METERS = 50
 GOD_MODE = True 
 
 BADGE_RULES = {
@@ -69,10 +69,10 @@ BADGE_RULES = {
 # ✅ FIX 2: Better Keywords so Google finds stuff
 CATEGORY_KEYWORDS = {
     "Park": "park",
-    "History": "tourist_attraction", # 'history' returns 0 results often
+    "History": "history", # 'history' returns 0 results often
     "Food": "restaurant",
     "Cafe": "cafe",
-    "Landmark": "point_of_interest",
+    "Landmark": "landmark",
 }
 
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
@@ -90,6 +90,7 @@ class ImageRequest(BaseModel):
     image_b64: str
     lat: float
     lon: float
+    
 
 # --- SESSION HELPERS ---
 def load_game_state():
@@ -249,6 +250,7 @@ def check_proximity(user_loc: UserLocation):
 
 @app.post("/verify-image")
 def verify_image(req: ImageRequest):
+    # 1. Load the Game State & Active Quest
     game_data = load_game_state()
     if not game_data:
         return {"success": False, "message": "No active session."}
@@ -257,35 +259,60 @@ def verify_image(req: ImageRequest):
     if not active_quest:
         return {"success": False, "message": "No active quest found."}
 
+    # 2. Extract Target Coordinates (Fixing the JSON path)
     target_lat = active_quest["location"]["lat"]
     target_lon = active_quest["location"]["lng"]
+
+    # 3. Location Check (With God Mode)
     dist = calculate_distance(req.lat, req.lon, target_lat, target_lon)
+    
+    # Check both Global God Mode AND the phone's request flag
+    is_god_mode = GOD_MODE or req.force_god_mode
 
-    if dist > UNLOCK_RADIUS_METERS and not GOD_MODE:
-        return {"success": False, "message": "Too far from target!"}
+    if dist > UNLOCK_RADIUS_METERS and not is_god_mode:
+        return {"success": False, "message": f"Too far! Get closer to {active_quest['name']}."}
 
+    # 4. AI Verification
     success = False
-    if GOD_MODE:
+    
+    if is_god_mode:
         print(f"⚡️ GOD MODE: Auto-approving {active_quest['name']}")
         success = True
     else:
         try:
+            # Decode Image
             image_bytes = base64.b64decode(req.image_b64.split(",")[-1]) 
+            
+            # Ask Gemini
             prompt = f"Look at this image. Is this a picture of {active_quest['name']}? Answer YES or NO. If unsure, say NO."
+            
             response = ai_client.models.generate_content(
                 model='gemini-2.5-flash', 
-                contents=[types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"), prompt]
+                contents=[
+                    types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"),
+                    prompt
+                ]
             )
+            
             ai_reply = response.text.strip().upper()
+            print(f"AI Vision Verdict: {ai_reply}")
+
             if "YES" in ai_reply:
                 success = True
+                
         except Exception as e:
             print(f"Vision Error: {e}")
-            success = True
+            # If AI fails but God Mode is on, allow it. Otherwise fail.
+            if is_god_mode:
+                 success = True
 
+    # 5. Handle Success
     if success:
+        # Update JSON State (Unlock next quest)
         advance_quest_stage(game_data)
         save_game_state(game_data)
+        
+        # Add Stamp to User Profile
         return process_stamp_logic(active_quest["name"], active_quest["category"])
     else:
         return {"success": False, "message": "That doesn't look like the target. Try again!"}

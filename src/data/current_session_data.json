@@ -1,28 +1,28 @@
 {
   "session": {
-    "huntId": "hunt_1768755279",
+    "huntId": "hunt_1768757606",
     "startLocation": {
-      "lat": 49.262243463260226,
-      "lng": -123.24522895897142
+      "lat": 49.26228422604691,
+      "lng": -123.24521040456499
     },
     "radiusMeters": 2000,
     "category": "Cafe",
     "currentQuestIndex": 0,
     "totalPoints": 0,
-    "startedAt": "2026-01-18T16:54:39.565596Z",
-    "updatedAt": "2026-01-18T16:54:39.565596Z"
+    "startedAt": "2026-01-18T17:33:26.423270Z",
+    "updatedAt": "2026-01-18T17:33:26.423270Z"
   },
   "quests": [
     {
       "id": "quest_1",
-      "sessionId": "hunt_1768755279",
-      "name": "Blue Chip Cafe",
+      "sessionId": "hunt_1768757606",
+      "name": "Starbucks",
       "location": {
-        "lat": 49.266614,
-        "lng": -123.2498741
+        "lat": 49.25469,
+        "lng": -123.23651
       },
       "category": "Cafe",
-      "riddle": "Where roasted scents begin to call,\nAnd murmurs mingle off the wall,\nBeneath a structure standing tall,\nYou'll find your solace, lest you fall.",
+      "riddle": "Where steaming cups bring comfort near,\nAnd ancient spirits banish fear.\nBeside the arch, both strong and clear,\nYour journey's ending, right in here.",
       "status": "active",
       "points": 100,
       "order": 1,
@@ -30,11 +30,11 @@
     },
     {
       "id": "quest_2",
-      "sessionId": "hunt_1768755279",
-      "name": "Bean Around The World Coffee House & Bistro",
+      "sessionId": "hunt_1768757606",
+      "name": "Starbucks",
       "location": {
-        "lat": 49.2588643,
-        "lng": -123.2480615
+        "lat": 49.2658923,
+        "lng": -123.242755
       },
       "category": "Cafe",
       "riddle": null,
@@ -45,11 +45,11 @@
     },
     {
       "id": "quest_3",
-      "sessionId": "hunt_1768755279",
-      "name": "Starbucks",
+      "sessionId": "hunt_1768757606",
+      "name": "Great Dane Coffee",
       "location": {
-        "lat": 49.25469,
-        "lng": -123.23651
+        "lat": 49.2700544,
+        "lng": -123.2507727
       },
       "category": "Cafe",
       "riddle": null,
@@ -60,11 +60,11 @@
     },
     {
       "id": "quest_4",
-      "sessionId": "hunt_1768755279",
-      "name": "The Mighty Oak @ the Well Cafe",
+      "sessionId": "hunt_1768757606",
+      "name": "Agora Eats Café",
       "location": {
-        "lat": 49.265648,
-        "lng": -123.244093
+        "lat": 49.2610566,
+        "lng": -123.2512167
       },
       "category": "Cafe",
       "riddle": null,
