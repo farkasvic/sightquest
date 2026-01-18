@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { MapPin, Compass, Trophy, Map } from "lucide-react";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -118,12 +119,14 @@ export default function Home() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Button className="bg-[#7bc950] hover:bg-[#7ce577] text-white dark:bg-[#7bc950] dark:hover:bg-[#7ce577] h-auto py-4">
-                    <div className="flex flex-col items-start gap-1">
-                      <span className="font-semibold">Start New Quest</span>
-                      <span className="text-xs opacity-90">Find new locations nearby</span>
-                    </div>
-                  </Button>
+                  <Link href="/explore">
+                    <Button className="bg-[#7bc950] hover:bg-[#7ce577] text-white dark:bg-[#7bc950] dark:hover:bg-[#7ce577] h-auto py-4 w-full">
+                      <div className="flex flex-col items-start gap-1">
+                        <span className="font-semibold">Start New Quest</span>
+                        <span className="text-xs opacity-90">Find new locations nearby</span>
+                      </div>
+                    </Button>
+                  </Link>
                   <Button variant="outline" className="h-auto py-4 border-[#a0ccda] text-[#7bc950] hover:bg-[#b6efd4]/20 dark:border-[#9cffd9] dark:text-[#7ce577]">
                     <div className="flex flex-col items-start gap-1">
                       <span className="font-semibold">View Passport</span>

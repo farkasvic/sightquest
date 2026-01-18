@@ -6,6 +6,7 @@ import { UserButton } from "@clerk/nextjs";
 import { Menu, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { NavItem } from "@/components/nav-item";
+import { CategoryCard } from "@/components/category-card";
 import {
   Sheet,
   SheetContent,
@@ -14,10 +15,18 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 
 export default function ExplorePage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMapLoading, setIsMapLoading] = useState(true);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
   const googleMapRef = useRef<google.maps.Map | null>(null);
   const userMarkerRef = useRef<google.maps.Marker | null>(null);
@@ -32,6 +41,19 @@ export default function ExplorePage() {
         return;
       }
 
+      // Check if Google Maps is already loaded
+      if (window.google && window.google.maps) {
+        initializeMap();
+        return;
+      }
+
+      // Check if script is already being loaded
+      const existingScript = document.querySelector(`script[src*="maps.googleapis.com"]`);
+      if (existingScript) {
+        existingScript.addEventListener('load', initializeMap);
+        return;
+      }
+
       try {
         // Load the Google Maps script dynamically
         const script = document.createElement("script");
@@ -39,88 +61,87 @@ export default function ExplorePage() {
         script.async = true;
         script.defer = true;
         
-        script.onload = () => {
-          if (!mapRef.current) return;
+        script.onload = initializeMap;
 
-          // Get user's current location
-          if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-              (position) => {
-                const userLocation = {
-                  lat: position.coords.latitude,
-                  lng: position.coords.longitude,
-                };
+        script.onerror = () => {
+          console.error("Error loading Google Maps script");
+          setIsMapLoading(false);
+        };
 
-                // Initialize map centered on user location
-                const map = new google.maps.Map(mapRef.current!, {
-                  center: userLocation,
-                  zoom: 15,
-                  disableDefaultUI: true,
-                  zoomControl: true,
-                  zoomControlOptions: {
-                    position: google.maps.ControlPosition.RIGHT_CENTER,
-                  },
-                  styles: [
-                    {
-                      featureType: "poi",
-                      elementType: "labels",
-                      stylers: [{ visibility: "on" }],
-                    },
-                  ],
-                });
+        document.head.appendChild(script);
+      } catch (error) {
+        console.error("Error loading Google Maps:", error);
+        setIsMapLoading(false);
+      }
+    };
 
-                googleMapRef.current = map;
+    const initializeMap = () => {
+      if (!mapRef.current) return;
 
-                // Add user location marker
-                const userMarker = new google.maps.Marker({
-                  position: userLocation,
-                  map: map,
-                  title: "Your Location",
-                  icon: {
-                    path: google.maps.SymbolPath.CIRCLE,
-                    scale: 10,
-                    fillColor: "#7bc950",
-                    fillOpacity: 1,
-                    strokeColor: "#ffffff",
-                    strokeWeight: 3,
-                  },
-                });
+      // Get user's current location
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const userLocation = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            };
 
-                userMarkerRef.current = userMarker;
-
-                // Add circle around user location (search radius visualization)
-                new google.maps.Circle({
-                  map: map,
-                  center: userLocation,
-                  radius: 1000, // 1km radius
-                  fillColor: "#7bc950",
-                  fillOpacity: 0.1,
-                  strokeColor: "#7bc950",
-                  strokeOpacity: 0.4,
-                  strokeWeight: 2,
-                });
-
-                setIsMapLoading(false);
+            // Initialize map centered on user location
+            const map = new google.maps.Map(mapRef.current!, {
+              center: userLocation,
+              zoom: 15,
+              disableDefaultUI: true,
+              zoomControl: true,
+              zoomControlOptions: {
+                position: google.maps.ControlPosition.RIGHT_CENTER,
               },
-              (error) => {
-                console.error("Error getting location:", error);
-                // Default to a location if user denies geolocation
-                const defaultLocation = { lat: 37.7749, lng: -122.4194 }; // San Francisco
-                
-                const map = new google.maps.Map(mapRef.current!, {
-                  center: defaultLocation,
-                  zoom: 13,
-                  disableDefaultUI: true,
-                  zoomControl: true,
-                });
+              styles: [
+                {
+                  featureType: "poi",
+                  elementType: "labels",
+                  stylers: [{ visibility: "on" }],
+                },
+              ],
+            });
 
-                googleMapRef.current = map;
-                setIsMapLoading(false);
-              }
-            );
-          } else {
-            // Browser doesn't support geolocation
-            const defaultLocation = { lat: 37.7749, lng: -122.4194 };
+            googleMapRef.current = map;
+
+            // Add user location marker
+            const userMarker = new google.maps.Marker({
+              position: userLocation,
+              map: map,
+              title: "Your Location",
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 10,
+                fillColor: "#7bc950",
+                fillOpacity: 1,
+                strokeColor: "#ffffff",
+                strokeWeight: 3,
+              },
+            });
+
+            userMarkerRef.current = userMarker;
+
+            // Add circle around user location (search radius visualization)
+            new google.maps.Circle({
+              map: map,
+              center: userLocation,
+              radius: 1000, // 1km radius
+              fillColor: "#7bc950",
+              fillOpacity: 0.1,
+              strokeColor: "#7bc950",
+              strokeOpacity: 0.4,
+              strokeWeight: 2,
+            });
+
+            setIsMapLoading(false);
+          },
+          (error) => {
+            console.error("Error getting location:", error);
+            // Default to a location if user denies geolocation
+            const defaultLocation = { lat: 37.7749, lng: -122.4194 }; // San Francisco
             
             const map = new google.maps.Map(mapRef.current!, {
               center: defaultLocation,
@@ -132,24 +153,19 @@ export default function ExplorePage() {
             googleMapRef.current = map;
             setIsMapLoading(false);
           }
-        };
+        );
+      } else {
+        // Browser doesn't support geolocation
+        const defaultLocation = { lat: 37.7749, lng: -122.4194 };
+        
+        const map = new google.maps.Map(mapRef.current!, {
+          center: defaultLocation,
+          zoom: 13,
+          disableDefaultUI: true,
+          zoomControl: true,
+        });
 
-        script.onerror = () => {
-          console.error("Error loading Google Maps script");
-          setIsMapLoading(false);
-        };
-
-        document.head.appendChild(script);
-
-        // Cleanup
-        return () => {
-          const existingScript = document.querySelector(`script[src*="maps.googleapis.com"]`);
-          if (existingScript) {
-            existingScript.remove();
-          }
-        };
-      } catch (error) {
-        console.error("Error loading Google Maps:", error);
+        googleMapRef.current = map;
         setIsMapLoading(false);
       }
     };
@@ -227,6 +243,7 @@ export default function ExplorePage() {
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20">
         <Button
           size="icon"
+          onClick={() => setIsCategoryDialogOpen(true)}
           className="h-20 w-20 rounded-full bg-white hover:bg-[#b6efd4] shadow-2xl shadow-[#7bc950]/50 transition-all hover:scale-110 active:scale-95 p-0"
         >
           <Image 
@@ -242,6 +259,60 @@ export default function ExplorePage() {
           Start Quest
         </p>
       </div>
+
+      {/* Category Selection Drawer */}
+      <Drawer open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+        <DrawerContent className="h-[85vh]">
+          <div className="bg-[#7bc950] px-6 py-4">
+            <DrawerTitle className="text-2xl font-bold text-white">Choose Your Quest Category</DrawerTitle>
+            <DrawerDescription className="text-sm text-white/90 mt-1">Select a category to start discovering locations nearby</DrawerDescription>
+          </div>
+          <div className="p-6 overflow-y-auto flex-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <CategoryCard
+                title="Restaurants"
+                image="/category_photo/restaurant.jpg"
+                onSelect={() => {
+                  console.log("Selected: Restaurants");
+                  setIsCategoryDialogOpen(false);
+                }}
+              />
+              <CategoryCard
+                title="Parks & Nature"
+                image="/category_photo/park.jpg"
+                onSelect={() => {
+                  console.log("Selected: Parks");
+                  setIsCategoryDialogOpen(false);
+                }}
+              />
+              <CategoryCard
+                title="Attractions"
+                image="/category_photo/attraction.jpg"
+                onSelect={() => {
+                  console.log("Selected: Attractions");
+                  setIsCategoryDialogOpen(false);
+                }}
+              />
+              <CategoryCard
+                title="Landmarks"
+                image="/category_photo/landmark.jpg"
+                onSelect={() => {
+                  console.log("Selected: Landmarks");
+                  setIsCategoryDialogOpen(false);
+                }}
+              />
+              <CategoryCard
+                title="Cafes & Coffee"
+                image="/category_photo/cafe.jpg"
+                onSelect={() => {
+                  console.log("Selected: Cafes");
+                  setIsCategoryDialogOpen(false);
+                }}
+              />
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
