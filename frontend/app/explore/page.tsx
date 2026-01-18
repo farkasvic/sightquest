@@ -33,6 +33,8 @@ export default function ExplorePage() {
   const [isQuestActive, setIsQuestActive] = useState(false);
   const [riddles, setRiddles] = useState<string[]>([]);
   const [currentRiddleIndex, setCurrentRiddleIndex] = useState(0);
+  const [solvedRiddles, setSolvedRiddles] = useState<Set<number>>(new Set());
+  const [locations, setLocations] = useState<Array<{name: string, description: string, image: string}>>([]);
   const [isQuestCompleteOpen, setIsQuestCompleteOpen] = useState(false);
   const [questStats, setQuestStats] = useState({ steps: 0, stamps: 0, exp: 0 });
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -86,7 +88,17 @@ export default function ExplorePage() {
   const startQuest = () => {
     const generatedRiddles = generateRiddles(selectedCategory!, locationCount);
     setRiddles(generatedRiddles);
+    
+    // Generate mock location data
+    const mockLocations = generatedRiddles.map((_, index) => ({
+      name: `${selectedCategory} Location ${index + 1}`,
+      description: `A wonderful place to explore and discover. This location offers unique experiences and memorable moments.`,
+      image: `/category_photo/${selectedCategory?.toLowerCase().split(' ')[0]}.jpg` || '/category_photo/restaurant.jpg'
+    }));
+    setLocations(mockLocations);
+    
     setCurrentRiddleIndex(0);
+    setSolvedRiddles(new Set());
     setIsQuestActive(true);
   };
 
@@ -99,7 +111,9 @@ export default function ExplorePage() {
     if (file) {
       // TODO: Process the captured photo (send to Gemini Vision API for verification)
       console.log("Photo captured:", file);
-      // For now, just log the file. Later, this will verify the location
+      // For now, mark the current riddle as solved
+      setSolvedRiddles(prev => new Set([...prev, currentRiddleIndex]));
+      // Later, this will verify the location and only mark as solved if verified
     }
   };
 
@@ -342,34 +356,61 @@ export default function ExplorePage() {
                 </DrawerDescription>
               </div>
               <div className="flex flex-col items-center justify-between flex-1 p-4 gap-2 overflow-y-auto">
-                {/* Riddle Display */}
-                <div className="bg-white rounded-xl p-6 shadow-lg max-w-md w-full flex-1 flex items-center justify-center">
-                  <div className="text-center space-y-3">
-                    <div className="text-4xl">🎯</div>
-                    <p className="text-base text-zinc-700 leading-relaxed italic">
-                      {riddles[currentRiddleIndex]}
-                    </p>
+                {solvedRiddles.has(currentRiddleIndex) ? (
+                  // Location Found View
+                  <div className="bg-white rounded-xl p-4 shadow-lg max-w-md w-full flex-1 flex items-center gap-4">
+                    {/* Location Image - Left */}
+                    <div className="relative w-1/2 h-full min-h-[200px] rounded-lg overflow-hidden flex-shrink-0">
+                      <Image
+                        src={locations[currentRiddleIndex]?.image || '/category_photo/restaurant.jpg'}
+                        alt={locations[currentRiddleIndex]?.name || 'Location'}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    
+                    {/* Location Info - Right */}
+                    <div className="flex-1 space-y-2">
+                      <h3 className="text-lg font-bold text-[#7bc950]">
+                        {locations[currentRiddleIndex]?.name}
+                      </h3>
+                      <p className="text-sm text-zinc-600 leading-relaxed">
+                        {locations[currentRiddleIndex]?.description}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  // Riddle View
+                  <>
+                    <div className="bg-white rounded-xl p-6 shadow-lg max-w-md w-full flex-1 flex items-center justify-center">
+                      <div className="text-center space-y-3">
+                        <div className="text-4xl">🎯</div>
+                        <p className="text-base text-zinc-700 leading-relaxed italic">
+                          {riddles[currentRiddleIndex]}
+                        </p>
+                      </div>
+                    </div>
 
-                {/* Camera Button */}
-                <div className="w-full max-w-md">
-                  <input
-                    ref={cameraInputRef}
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    onChange={handlePhotoCapture}
-                    className="hidden"
-                  />
-                  <Button
-                    onClick={handleCameraClick}
-                    className="w-full bg-[#7bc950] hover:bg-[#7ce577] text-white py-6 text-lg font-semibold rounded-xl shadow-lg"
-                  >
-                    <Camera className="h-6 w-6 mr-2" />
-                    Take Photo to Verify
-                  </Button>
-                </div>
+                    {/* Camera Button */}
+                    <div className="w-full max-w-md">
+                      <input
+                        ref={cameraInputRef}
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handlePhotoCapture}
+                        className="hidden"
+                      />
+                      <Button
+                        onClick={handleCameraClick}
+                        className="w-full bg-[#7bc950] hover:bg-[#7ce577] text-white py-6 text-lg font-semibold rounded-xl shadow-lg"
+                      >
+                        <Camera className="h-6 w-6 mr-2" />
+                        Take Photo to Verify
+                      </Button>
+                    </div>
+                  </>
+                )}
 
                 {/* Navigation Controls */}
                 <div className="flex items-center gap-2">
@@ -525,6 +566,8 @@ export default function ExplorePage() {
           setIsQuestCompleteOpen(false);
           setIsQuestActive(false);
           setRiddles([]);
+          setLocations([]);
+          setSolvedRiddles(new Set());
           setCurrentRiddleIndex(0);
           setSelectedCategory(null);
           setLocationCount(3);
