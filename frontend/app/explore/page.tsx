@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { UserButton } from "@clerk/nextjs";
-import { Menu, Loader2, Plus, Minus } from "lucide-react";
+import { Menu, Loader2, Plus, Minus, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import Image from "next/image";
 import { NavItem } from "@/components/nav-item";
 import { CategoryCard } from "@/components/category-card";
@@ -29,9 +29,62 @@ export default function ExplorePage() {
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [locationCount, setLocationCount] = useState(3);
+  const [isQuestActive, setIsQuestActive] = useState(false);
+  const [riddles, setRiddles] = useState<string[]>([]);
+  const [currentRiddleIndex, setCurrentRiddleIndex] = useState(0);
   const mapRef = useRef<HTMLDivElement>(null);
   const googleMapRef = useRef<google.maps.Map | null>(null);
   const userMarkerRef = useRef<google.maps.Marker | null>(null);
+
+  const generateRiddles = (category: string, count: number): string[] => {
+    const riddleTemplates: Record<string, string[]> = {
+      "Restaurants": [
+        "Where flavors dance and aromas fill the air, find the place where cuisine beyond compare awaits those who dare.",
+        "Beneath the golden arches or a cozy nook, seek the spot where meals are made from a cherished book.",
+        "A place where tables are set and waiters glide, discover the dining haven where taste buds come alive.",
+        "Where chefs create magic and plates are art, find the culinary destination that will capture your heart.",
+        "In a bustling kitchen's embrace, seek the eatery where every dish has its special place."
+      ],
+      "Parks & Nature": [
+        "Where trees whisper secrets and birds sing free, find the green sanctuary for you and me.",
+        "Nature's canvas painted with flowers bright, seek the peaceful haven of natural light.",
+        "Where paths wind through emerald dreams, discover the oasis by babbling streams.",
+        "A place where grass grows and children play, find the outdoor paradise for a perfect day.",
+        "Where urban jungle meets nature's grace, seek the verdant tranquil space."
+      ],
+      "Attractions": [
+        "Where crowds gather and wonders await, find the destination that makes hearts elate.",
+        "A place of excitement and joy untold, seek the attraction worth its weight in gold.",
+        "Where memories are made and photos are taken, discover the spot where spirits awaken.",
+        "In the heart of adventure and thrill, find the attraction that gives quite a chill.",
+        "Where entertainment meets amazement true, seek the place with spectacular views."
+      ],
+      "Landmarks": [
+        "A monument to time and history's tale, find the landmark that will never pale.",
+        "Where architecture soars and stories are told, seek the structure both new and old.",
+        "A beacon in the cityscape so grand, discover the landmark where travelers stand.",
+        "Where past meets present in stone and steel, find the monument with powerful appeal.",
+        "An icon that defines this place, seek the landmark you cannot replace."
+      ],
+      "Cafes & Coffee": [
+        "Where coffee brews and conversations flow, find the café with ambiance aglow.",
+        "A cozy corner where espresso reigns supreme, seek the coffeehouse of your morning dream.",
+        "Where baristas craft and steam milk white, discover the café that feels just right.",
+        "In the aroma of beans freshly ground, find the coffee haven to be found.",
+        "Where laptops open and friendships brew, seek the café with the perfect view."
+      ]
+    };
+
+    const templates = riddleTemplates[category] || riddleTemplates["Restaurants"];
+    return templates.slice(0, count);
+  };
+
+  const startQuest = () => {
+    const generatedRiddles = generateRiddles(selectedCategory!, locationCount);
+    setRiddles(generatedRiddles);
+    setCurrentRiddleIndex(0);
+    setIsQuestActive(true);
+  };
 
   useEffect(() => {
     const initMap = async () => {
@@ -127,16 +180,16 @@ export default function ExplorePage() {
             userMarkerRef.current = userMarker;
 
             // Add circle around user location (search radius visualization)
-            new google.maps.Circle({
-              map: map,
-              center: userLocation,
-              radius: 1000, // 1km radius
-              fillColor: "#7bc950",
-              fillOpacity: 0.1,
-              strokeColor: "#7bc950",
-              strokeOpacity: 0.4,
-              strokeWeight: 2,
-            });
+            // new google.maps.Circle({
+            //   map: map,
+            //   center: userLocation,
+            //   radius: 1000, // 1km radius
+            //   fillColor: "#7bc950",
+            //   fillOpacity: 0.1,
+            //   strokeColor: "#7bc950",
+            //   strokeOpacity: 0.4,
+            //   strokeWeight: 2,
+            // });
 
             setIsMapLoading(false);
           },
@@ -207,11 +260,9 @@ export default function ExplorePage() {
           <SheetContent side="left" className="w-[280px] bg-white dark:bg-zinc-900 p-0 [&>button]:text-white [&>button]:hover:text-white/80">
             <SheetHeader className="sr-only">
               <SheetTitle>Navigation Menu</SheetTitle>
-              <SheetDescription>Navigate your adventure</SheetDescription>
             </SheetHeader>
             <div className="bg-[#7bc950] p-6">
               <h2 className="text-xl font-semibold text-white">Menu</h2>
-              <p className="text-sm text-white/90 mt-1">Navigate your adventure</p>
             </div>
             <div className="p-6 flex flex-col gap-2">
               <NavItem label="Home" onClick={() => setIsMenuOpen(false)} />
@@ -262,13 +313,84 @@ export default function ExplorePage() {
       {/* Category Selection Drawer */}
       <Drawer open={isCategoryDialogOpen} onOpenChange={(open) => {
         setIsCategoryDialogOpen(open);
-        if (!open) {
+        if (!open && !isQuestActive) {
           setSelectedCategory(null);
           setLocationCount(3);
         }
       }}>
-        <DrawerContent className="h-[85vh]">
-          {!selectedCategory ? (
+        <DrawerContent className={isQuestActive ? "h-[50vh]" : "h-[85vh]"}>
+          {isQuestActive ? (
+            // Step 3: Riddle Carousel
+            <>
+              <div className="bg-[#7bc950] px-4 py-3">
+                <DrawerTitle className="text-xl font-bold text-white">{selectedCategory} Quest</DrawerTitle>
+                <DrawerDescription className="text-xs text-white/90 mt-0.5">
+                  Riddle {currentRiddleIndex + 1} of {riddles.length}
+                </DrawerDescription>
+              </div>
+              <div className="flex flex-col items-center justify-between flex-1 p-4 gap-2 overflow-y-auto">
+                {/* Riddle Display */}
+                <div className="bg-white rounded-xl p-6 shadow-lg max-w-md w-full flex-1 flex items-center justify-center">
+                  <div className="text-center space-y-3">
+                    <div className="text-4xl">🎯</div>
+                    <p className="text-base text-zinc-700 leading-relaxed italic">
+                      {riddles[currentRiddleIndex]}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Navigation Controls */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="icon"
+                    onClick={() => setCurrentRiddleIndex(Math.max(0, currentRiddleIndex - 1))}
+                    disabled={currentRiddleIndex === 0}
+                    className="h-8 w-8 rounded-full bg-[#7bc950] hover:bg-[#7ce577] text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+
+                  <div className="flex gap-1">
+                    {riddles.map((_, index) => (
+                      <div
+                        key={index}
+                        className={`h-1 w-1 rounded-full transition-all ${
+                          index === currentRiddleIndex
+                            ? 'bg-[#7bc950] w-4'
+                            : 'bg-zinc-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  <Button
+                    size="icon"
+                    onClick={() => setCurrentRiddleIndex(Math.min(riddles.length - 1, currentRiddleIndex + 1))}
+                    disabled={currentRiddleIndex === riddles.length - 1}
+                    className="h-8 w-8 rounded-full bg-[#7bc950] hover:bg-[#7ce577] text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* End Quest Button */}
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    setIsQuestActive(false);
+                    setRiddles([]);
+                    setCurrentRiddleIndex(0);
+                    setSelectedCategory(null);
+                    setLocationCount(3);
+                    setIsCategoryDialogOpen(false);
+                  }}
+                >
+                  End Quest
+                </Button>
+              </div>
+            </>
+          ) : !selectedCategory ? (
             // Step 1: Category Selection
             <>
               <div className="bg-[#7bc950] px-6 py-4">
@@ -348,10 +470,7 @@ export default function ExplorePage() {
                   </Button>
                   <Button
                     onClick={() => {
-                      console.log(`Starting quest: ${selectedCategory}, ${locationCount} locations`);
-                      setIsCategoryDialogOpen(false);
-                      setSelectedCategory(null);
-                      setLocationCount(3);
+                      startQuest();
                     }}
                     className="flex-1 bg-[#7bc950] hover:bg-[#7ce577] text-white"
                   >
