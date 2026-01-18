@@ -32,6 +32,7 @@ export default function ExplorePage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [locationCount, setLocationCount] = useState(3);
   const [isQuestActive, setIsQuestActive] = useState(false);
+  const [isGeneratingRiddles, setIsGeneratingRiddles] = useState(false);
   const [riddles, setRiddles] = useState<string[]>([]);
   const [currentRiddleIndex, setCurrentRiddleIndex] = useState(0);
   const [solvedRiddles, setSolvedRiddles] = useState<Set<number>>(new Set());
@@ -172,8 +173,15 @@ export default function ExplorePage() {
       
       setLocations(questLocations);
       
+      // Activate quest UI immediately to show loading screen
+      setCurrentRiddleIndex(0);
+      setSolvedRiddles(new Set());
+      setIsQuestActive(true);
+      
       // Generate all riddles at once
       console.log("🎭 Generating all riddles...");
+      setIsGeneratingRiddles(true);
+      
       try {
         const riddlesResponse = await generateAllRiddles();
         const generatedQuests = riddlesResponse.quests || [];
@@ -186,11 +194,9 @@ export default function ExplorePage() {
         console.error("Failed to generate riddles:", error);
         // Fallback to placeholders
         setRiddles(new Array(quests.length).fill("A mysterious place awaits you..."));
+      } finally {
+        setIsGeneratingRiddles(false);
       }
-      
-      setCurrentRiddleIndex(0);
-      setSolvedRiddles(new Set());
-      setIsQuestActive(true);
       
       console.log("🎯 Quest started successfully!");
     } catch (error) {
@@ -496,12 +502,33 @@ export default function ExplorePage() {
                   // Riddle View
                   <>
                     <div className="bg-white rounded-xl p-6 shadow-lg max-w-md w-full flex-1 flex items-center justify-center">
-                      <div className="text-center space-y-3">
-                        <div className="text-4xl">🎯</div>
-                        <p className="text-base text-zinc-700 leading-relaxed italic">
-                          {riddles[currentRiddleIndex]}
-                        </p>
-                      </div>
+                      {isGeneratingRiddles ? (
+                        <div className="text-center space-y-4">
+                          <div className="relative inline-block">
+                            <Loader2 className="h-12 w-12 text-[#7bc950] animate-spin" />
+                          </div>
+                          <div className="space-y-2">
+                            <p className="text-lg font-semibold text-zinc-800">
+                              Crafting Your Riddles...
+                            </p>
+                            <p className="text-sm text-zinc-600">
+                              The Mysterious Pathfinder is preparing {locationCount} cryptic clue{locationCount > 1 ? 's' : ''} for your adventure
+                            </p>
+                          </div>
+                          <div className="flex items-center justify-center gap-1 mt-4">
+                            <div className="w-2 h-2 bg-[#7bc950] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                            <div className="w-2 h-2 bg-[#7bc950] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                            <div className="w-2 h-2 bg-[#7bc950] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center space-y-3">
+                          <div className="text-4xl">🎯</div>
+                          <p className="text-base text-zinc-700 leading-relaxed italic">
+                            {riddles[currentRiddleIndex]}
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Camera Button */}
@@ -516,7 +543,8 @@ export default function ExplorePage() {
                       />
                       <Button
                         onClick={handleCameraClick}
-                        className="w-full bg-[#7bc950] hover:bg-[#7ce577] text-white py-6 text-lg font-semibold rounded-xl shadow-lg"
+                        disabled={isGeneratingRiddles}
+                        className="w-full bg-[#7bc950] hover:bg-[#7ce577] text-white py-6 text-lg font-semibold rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Camera className="h-6 w-6 mr-2" />
                         Take Photo to Verify
@@ -613,7 +641,7 @@ export default function ExplorePage() {
                 </div>
               </div>
             </>
-          ) : (
+          ) : !isGeneratingRiddles ? (
             // Step 2: Location Count Selection
             <>
               <div className="bg-[#7bc950] px-6 py-4">
@@ -665,7 +693,7 @@ export default function ExplorePage() {
                 </div>
               </div>
             </>
-          )}
+          ) : null}
         </DrawerContent>
       </Drawer>
 

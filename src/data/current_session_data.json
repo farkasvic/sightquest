@@ -1,61 +1,31 @@
 {
   "session": {
-    "huntId": "hunt_1768759553",
+    "huntId": "hunt_1768760040",
     "startLocation": {
-      "lat": 49.26208006825034,
-      "lng": -123.24539415209091
+      "lat": 49.2620766061759,
+      "lng": -123.24539360561761
     },
     "radiusMeters": 2000,
     "category": "Food",
     "currentQuestIndex": 0,
     "totalPoints": 0,
-    "startedAt": "2026-01-18T18:05:53.416937Z",
-    "updatedAt": "2026-01-18T18:05:53.416937Z"
+    "startedAt": "2026-01-18T18:14:00.286077Z",
+    "updatedAt": "2026-01-18T18:14:00.286077Z"
   },
   "quests": [
     {
       "id": "quest_1",
-      "sessionId": "hunt_1768759553",
+      "sessionId": "hunt_1768760040",
       "name": "Browns Crafthouse UBC",
       "location": {
         "lat": 49.2661875,
         "lng": -123.2488395
       },
       "category": "Food",
-      "riddle": "Where frothing glasses catch the light,\nBeyond the Great Nest, shining bright,\nFor hunger's plea and thirst's delight,\nSeek out this haven, just in sight!",
+      "riddle": "Where concrete giants proudly soar,\nAnd hungry hearts yearn to explore,\nYou'll find a pour of golden light,\nTo warm the day and cheer the night.",
       "status": "active",
       "points": 100,
       "order": 1,
-      "awardedPoints": 0
-    },
-    {
-      "id": "quest_2",
-      "sessionId": "hunt_1768759553",
-      "name": "Sports Illustrated Clubhouse",
-      "location": {
-        "lat": 49.2542486,
-        "lng": -123.2357293
-      },
-      "category": "Food",
-      "riddle": "Where legends' triumphs light the **wall**,\nAnd hunger's ancient spirit will **call**,\nA haven where heroic deeds enthrall,\nAnd ample plates await you **all**.",
-      "status": "locked",
-      "points": 100,
-      "order": 2,
-      "awardedPoints": 0
-    },
-    {
-      "id": "quest_3",
-      "sessionId": "hunt_1768759553",
-      "name": "Kyros Kitchen",
-      "location": {
-        "lat": 49.266614,
-        "lng": -123.2498741
-      },
-      "category": "Food",
-      "riddle": "Where hungry bellies seek a warm **embrace**,\nAnd savory scents fill every open **space**,\nBeneath grand archways, where wisdom finds its **grace**,\nDiscover comfort at a quickened **pace**.",
-      "status": "locked",
-      "points": 100,
-      "order": 3,
       "awardedPoints": 0
     }
   ]
