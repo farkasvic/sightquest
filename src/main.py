@@ -36,6 +36,7 @@ load_dotenv(dotenv_path=env_path)
 
 # 3. Get the key
 api_key = os.getenv("GEMINI_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # 4. Debug Print (So you know if it worked)
 if not api_key:
@@ -85,8 +86,6 @@ CATEGORY_KEYWORDS = {
     "Landmark": "landmark",
 }
 
-
-GOOGLE_API_KEY = "AIzaSyC_SY-hHyH0FqMRqEv1VKa0gV1b4bqPrDk"
 
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
 

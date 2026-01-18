@@ -1,27 +1,27 @@
 {
   "session": {
-    "huntId": "hunt_1768748747",
+    "huntId": "hunt_1768750630",
     "startLocation": {
-      "lat": 49.262081484790976,
-      "lng": -123.24539523704617
+      "lat": 49.26207904845654,
+      "lng": -123.24539575891086
     },
     "radiusMeters": 2000,
-    "category": "Cafe",
+    "category": "Food",
     "currentQuestIndex": 0,
     "totalPoints": 0,
-    "startedAt": "2026-01-18T15:05:47.459728Z",
-    "updatedAt": "2026-01-18T15:05:47.459728Z"
+    "startedAt": "2026-01-18T15:37:10.142826Z",
+    "updatedAt": "2026-01-18T15:37:10.142826Z"
   },
   "quests": [
     {
       "id": "quest_1",
-      "sessionId": "hunt_1768748747",
-      "name": "The Mighty Oak @ the Well Cafe",
+      "sessionId": "hunt_1768750630",
+      "name": "Feast",
       "location": {
-        "lat": 49.265648,
-        "lng": -123.244093
+        "lat": 49.2578729,
+        "lng": -123.2530618
       },
-      "category": "Cafe",
+      "category": "Food",
       "riddle": "Find the place where history whispers.",
       "status": "active",
       "points": 100,
@@ -30,13 +30,13 @@
     },
     {
       "id": "quest_2",
-      "sessionId": "hunt_1768748747",
-      "name": "The Original Beanery Coffee House",
+      "sessionId": "hunt_1768750630",
+      "name": "Nori Bento & Udon",
       "location": {
-        "lat": 49.2636905,
-        "lng": -123.2393097
+        "lat": 49.2662263,
+        "lng": -123.2474468
       },
-      "category": "Cafe",
+      "category": "Food",
       "riddle": "Find the place where history whispers.",
       "status": "locked",
       "points": 100,
@@ -45,13 +45,13 @@
     },
     {
       "id": "quest_3",
-      "sessionId": "hunt_1768748747",
-      "name": "Blenz Coffee",
+      "sessionId": "hunt_1768750630",
+      "name": "Gather at Vanier",
       "location": {
-        "lat": 49.2540679,
-        "lng": -123.2351196
+        "lat": 49.2646468,
+        "lng": -123.2583108
       },
-      "category": "Cafe",
+      "category": "Food",
       "riddle": "Find the place where history whispers.",
       "status": "locked",
       "points": 100,
@@ -60,13 +60,13 @@
     },
     {
       "id": "quest_4",
-      "sessionId": "hunt_1768748747",
-      "name": "McDonald's",
+      "sessionId": "hunt_1768750630",
+      "name": "Seoul Hotdogs",
       "location": {
-        "lat": 49.2666467,
-        "lng": -123.2425376
+        "lat": 49.2664755,
+        "lng": -123.249477
       },
-      "category": "Cafe",
+      "category": "Food",
       "riddle": "Find the place where history whispers.",
       "status": "locked",
       "points": 100,
