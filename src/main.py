@@ -18,7 +18,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 app = FastAPI()
 
 # --- CONFIG ---
-os.environ["GEMINI_API_KEY"] = "AIzaSyBNKDESITu88D-YyW8OzZrEZCq8HIJGfXo"
+os.environ["GEMINI_API_KEY"] = "AIzaSyAx6wv9QaoSGlLRHbpwK2W9uc7tLM2-mes"
 ai_client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
 # Global cache to save money/quota
@@ -36,8 +36,8 @@ users_collection = db["users"]
 TARGET_POI = {
     "lat": 49.2666, 
     "lon": -123.2494, 
-    "name": "UBC Blue Chip", 
-    "category": "Food"
+    "name": "UBC Totem Pole", 
+    "category": "History"
 } 
 UNLOCK_RADIUS_METERS = 50 
 GOD_MODE = False 
@@ -166,6 +166,46 @@ def get_riddle():
     except Exception as e:
         print(f"Gemini Error: {e}")
         return {"riddle": "I stand tall with hands on my face,\nCounting the moments in this open place."}
+    
+# --- LEADERBOARD & XP ENDPOINT ---
+@app.get("/stats")
+def get_stats():
+    user = get_current_user()
+    
+    # 1. Calculate XP (Logic: 150 XP per Stamp, 500 XP per Badge)
+    xp = (len(user["stamps"]) * 150) + (len(user["badges"]) * 500)
+    
+    # 2. Fake Rivals for the Demo
+    leaderboard = [
+        {"rank": 1, "name": "AtlasTheGuide", "xp": 5200, "avatar": "🦁"},
+        {"rank": 2, "name": "CityWalker99", "xp": 3450, "avatar": "👟"},
+        {"rank": 3, "name": "FoodFindr", "xp": 2800, "avatar": "🍕"},
+        # We will insert the USER into this list dynamically below
+        {"rank": 5, "name": "RookieDave", "xp": 800, "avatar": "🌱"},
+    ]
+    
+    # 3. Add Current User
+    my_entry = {
+        "name": "You", 
+        "xp": xp, 
+        "avatar": "🦄", 
+        "is_me": True
+    }
+    leaderboard.append(my_entry)
+    
+    # 4. Re-sort Leaderboard by XP
+    leaderboard.sort(key=lambda x: x["xp"], reverse=True)
+    
+    # 5. Assign Ranks
+    for index, player in enumerate(leaderboard):
+        player["rank"] = index + 1
+
+    return {
+        "xp": xp,
+        "total_badges": len(user["badges"]),
+        "total_quests": len(user["stamps"]),
+        "leaderboard": leaderboard
+    }
     
 
 @app.post("/verify-image")
