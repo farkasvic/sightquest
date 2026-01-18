@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { UserButton } from "@clerk/nextjs";
-import { ArrowLeft, Footprints, Trophy, Award } from "lucide-react";
+import { ArrowLeft, Footprints, Trophy, Award, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { StampCard } from "@/components/stamp-card";
@@ -31,6 +31,9 @@ export default function StatsPage() {
   ]);
 
   const stepPercentage = Math.min((dailySteps / stepGoal) * 100, 100);
+  const totalStamps = stamps.length;
+  const unlockedBadges = badges.filter(badge => badge.unlocked).length;
+  const totalBadges = badges.length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#b6efd4] via-[#9cffd9] to-[#a0ccda]">
@@ -55,23 +58,46 @@ export default function StatsPage() {
 
       {/* Main Content */}
       <main className="px-4 py-6 space-y-6 max-w-4xl mx-auto">
-        {/* Total EXP Section */}
+        {/* Summary Stats Card */}
         <Card className="bg-white/90 backdrop-blur-sm border-[#7bc950]/30">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Trophy className="h-6 w-6 text-[#7bc950]" />
-              <CardTitle>Total Experience</CardTitle>
-            </div>
-            <CardDescription>Your overall experience points</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center">
-              <div className="text-6xl font-bold text-[#7bc950]">
+          <CardContent className="p-6">
+            {/* Total EXP - Top Section */}
+            <div className="text-center pb-6">
+              <Trophy className="h-10 w-10 text-[#7bc950] mx-auto mb-3" />
+              <div className="text-5xl font-bold text-[#7bc950]">
                 {totalExp.toLocaleString()}
               </div>
               <p className="text-sm text-zinc-600 mt-2">
-                EXP
+                Total EXP
               </p>
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-zinc-200 my-4" />
+
+            {/* Stamps and Badges - Bottom Section */}
+            <div className="grid grid-cols-2 gap-6">
+              {/* Stamps Collected - Left */}
+              <div className="text-center">
+                <MapPin className="h-8 w-8 text-[#7ce577] mx-auto mb-2" />
+                <div className="text-3xl font-bold text-[#7ce577]">
+                  {totalStamps}
+                </div>
+                <p className="text-xs text-zinc-600 mt-1">
+                  Stamps Collected
+                </p>
+              </div>
+
+              {/* Badges Unlocked - Right */}
+              <div className="text-center">
+                <Award className="h-8 w-8 text-[#a0ccda] mx-auto mb-2" />
+                <div className="text-3xl font-bold text-[#a0ccda]">
+                  {unlockedBadges} / {totalBadges}
+                </div>
+                <p className="text-xs text-zinc-600 mt-1">
+                  Badges Unlocked
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
