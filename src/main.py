@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types 
 from fastapi import FastAPI, Query, Body, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles 
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -25,6 +26,15 @@ import requests
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 app = FastAPI()
+
+# --- CORS CONFIGURATION ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins for development
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # --- FILE SYSTEM CONFIG ---
 DATA_DIR = Path("src/data")
@@ -172,6 +182,21 @@ def process_stamp_logic(poi_name, category):
 async def read_index():
     return FileResponse('src/static/index2.html')
 
+@app.get("/get-current-session")
+def get_current_session():
+    """
+    Get the current active session with all quests and progress.
+    Frontend uses this to display riddles and track progress.
+    """
+    game_data = load_game_state()
+    if not game_data:
+        return {"session": None, "quests": []}
+    
+    return {
+        "session": game_data.get("session"),
+        "quests": game_data.get("quests", [])
+    }
+
 @app.get("/get-riddle")
 def get_riddle():
     game_data = load_game_state()
@@ -225,6 +250,68 @@ def get_riddle():
         "category": active_quest["category"],
         "quest_id": active_quest["id"]
     }
+
+@app.get("/generate-all-riddles")
+def generate_all_riddles():
+    """Generate riddles for all quests in the current session"""
+    game_data = load_game_state()
+    if not game_data:
+        return {"error": "No active session"}
+    
+    quests = game_data.get("quests", [])
+    generated_count = 0
+    
+    for quest in quests:
+        # Skip if riddle already exists
+        if quest.get("riddle") and quest["riddle"] != "Find the place where history whispers.":
+            continue
+            
+        try:
+            print(f"🤖 Generating AI riddle for {quest['name']}...")
+            prompt = (f"""
+                <Role>
+                You are the "Mysterious Pathfinder", a mischievous wayfinding bard.
+                Your tone is ancient, playful, evocative, and easy to understand.
+                You enjoy teasing explorers just enough to make the discovery fun.
+                </Role>
+
+                <Task>
+                Write a short, cryptic, FOUR-line riddle for a real world location.
+                The riddle should feel like part of a game and make the player curious to explore.
+                </Task>
+
+                <Location_Context>
+                Place name: {quest['name']}
+                Category: {quest['category']}
+                </Location_Context>
+
+                <Constraints>
+                NEVER use the place name or obvious aliases. Do NOT mention the city, campus, or region. 
+                The final words of all lines must clearly rhyme. Include at least ONE concrete visual feature typical of the category.
+                Include at least ONE spatial or structural anchor that distinguishes this place nearby. 
+                Do all reasoning silently; output ONLY the four lines. The riddle should narrow the search, not obscure it.
+                </Constraints>
+                """
+            )
+            response = ai_client.models.generate_content(
+                model='gemini-2.5-flash', 
+                contents=prompt
+            )
+            quest["riddle"] = response.text if response.text else "A mystery awaits..."
+            generated_count += 1
+        except Exception as e:
+            print(f"AI Error for {quest['name']}: {e}")
+            quest["riddle"] = "A hidden gem awaits your steps,\nWhere secrets lie and memories slept."
+    
+    save_game_state(game_data)
+    print(f"✅ Generated {generated_count} riddles")
+    
+    return {
+        "success": True,
+        "generated": generated_count,
+        "quests": quests
+    }
+
 
 @app.post("/check-proximity")
 def check_proximity(user_loc: UserLocation):
@@ -370,7 +457,10 @@ def start_session(data: dict = Body(...)):
     }
 
     quests = []
-    for i, lm in enumerate(data["landmarks"]):
+    landmarks = data.get("landmarks", [])
+    print(f"🔍 Received {len(landmarks)} landmarks")
+    
+    for i, lm in enumerate(landmarks):
         status = "active" if i == 0 else "locked"
         quests.append({
             "id": f"quest_{lm['order']}",
@@ -388,7 +478,7 @@ def start_session(data: dict = Body(...)):
     output = {"session": session, "quests": quests}
     save_game_state(output)
     print(f"📜 Session Started! {len(quests)} quests loaded.")
-    return {"status": "session_created", "huntId": hunt_id}
+    return {"status": "session_created", "huntId": hunt_id, "quests": quests}
 
 @app.post("/complete-session")
 def complete_session():

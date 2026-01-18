@@ -8,6 +8,7 @@ import Image from "next/image";
 import { NavItem } from "@/components/nav-item";
 import { CategoryCard } from "@/components/category-card";
 import { QuestCompleteDialog } from "@/components/quest-complete-dialog";
+import { getCurrentSession, startSession, getLandmarks, getRiddle, generateAllRiddles } from "@/lib/api";
 import {
   Sheet,
   SheetContent,
@@ -31,16 +32,36 @@ export default function ExplorePage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [locationCount, setLocationCount] = useState(3);
   const [isQuestActive, setIsQuestActive] = useState(false);
+  const [isGeneratingRiddles, setIsGeneratingRiddles] = useState(false);
   const [riddles, setRiddles] = useState<string[]>([]);
   const [currentRiddleIndex, setCurrentRiddleIndex] = useState(0);
   const [solvedRiddles, setSolvedRiddles] = useState<Set<number>>(new Set());
   const [locations, setLocations] = useState<Array<{name: string, description: string, image: string}>>([]);
+  const [questLocations, setQuestLocations] = useState<Array<{lat: number, lng: number}>>([]);
   const [isQuestCompleteOpen, setIsQuestCompleteOpen] = useState(false);
   const [questStats, setQuestStats] = useState({ steps: 0, stamps: 0, exp: 0 });
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const googleMapRef = useRef<google.maps.Map | null>(null);
   const userMarkerRef = useRef<google.maps.Marker | null>(null);
+  const questMarkersRef = useRef<google.maps.Marker[]>([]);
+
+  // Test backend connection
+  // useEffect(() => {
+  //   async function testBackendConnection() {
+  //     try {
+  //       console.log('🔄 Testing backend connection...');
+  //       const session = await getCurrentSession();
+  //       console.log('✅ Backend connected successfully!');
+  //       console.log('📦 Current session data:', session);
+  //     } catch (error) {
+  //       console.error('❌ Backend connection failed:', error);
+  //       console.error('Make sure backend is running on http://localhost:8000');
+  //     }
+  //   }
+  //   testBackendConnection();
+  // }, []);
 
   const generateRiddles = (category: string, count: number): string[] => {
     const riddleTemplates: Record<string, string[]> = {
@@ -85,21 +106,125 @@ export default function ExplorePage() {
     return templates.slice(0, count);
   };
 
-  const startQuest = () => {
-    const generatedRiddles = generateRiddles(selectedCategory!, locationCount);
-    setRiddles(generatedRiddles);
-    
-    // Generate mock location data
-    const mockLocations = generatedRiddles.map((_, index) => ({
-      name: `${selectedCategory} Location ${index + 1}`,
-      description: `A wonderful place to explore and discover. This location offers unique experiences and memorable moments.`,
-      image: `/category_photo/${selectedCategory?.toLowerCase().split(' ')[0]}.jpg` || '/category_photo/restaurant.jpg'
-    }));
-    setLocations(mockLocations);
-    
-    setCurrentRiddleIndex(0);
-    setSolvedRiddles(new Set());
-    setIsQuestActive(true);
+  const startQuest = async () => {
+    if (!userLocation) {
+      console.error("User location not available");
+      return;
+    }
+
+    try {
+      console.log("🚀 Starting quest...");
+      
+      // Map frontend categories to backend categories
+      const categoryMap: Record<string, string> = {
+        "Restaurants": "Food",
+        "Parks & Nature": "Park",
+        "Attractions": "History",
+        "Landmarks": "Landmark",
+        "Cafes & Coffee": "Cafe"
+      };
+      
+      const backendCategory = categoryMap[selectedCategory!] || "Park";
+      
+      // First, fetch landmarks
+      console.log("🔍 Fetching landmarks...");
+      const landmarksData = await getLandmarks(
+        userLocation.lat,
+        userLocation.lng,
+        backendCategory,
+        2000 // 2km radius
+      );
+      
+      // Transform Google Places API response to backend format
+      const placesResults = landmarksData.results || [];
+      console.log(`📍 Found ${placesResults.length} places from Google`);
+      
+      const landmarks = placesResults.slice(0, locationCount).map((place: any, index: number) => ({
+        name: place.name,
+        lat: place.geometry.location.lat,
+        lng: place.geometry.location.lng,
+        order: index + 1
+      }));
+      
+      console.log(`🎯 Prepared ${landmarks.length} landmarks for quest`);
+      
+      // Call backend to start session with landmarks
+      const response = await startSession(
+        userLocation.lat,
+        userLocation.lng,
+        backendCategory,
+        2000, // 2km radius
+        landmarks
+      );
+      
+      console.log("✅ Session started:", response);
+      
+      // Extract quests and locations from backend response
+      const quests = response.quests || [];
+      
+      if (quests.length === 0) {
+        throw new Error("No quests were created. Please try again.");
+      }
+      
+      // Store quest coordinates for map markers
+      const questCoords = quests.map((q: any) => ({
+        lat: q.location.lat,
+        lng: q.location.lng
+      }));
+      setQuestLocations(questCoords);
+      
+      // Generate locations array from quests
+      const questLocations = quests.map((q: any) => ({
+        name: q.name,
+        description: "A wonderful place to explore and discover.",
+        image: `/category_photo/${selectedCategory?.toLowerCase().split(' ')[0]}.jpg` || '/category_photo/restaurant.jpg'
+      }));
+      
+      setLocations(questLocations);
+      
+      // Activate quest UI immediately to show loading screen
+      setCurrentRiddleIndex(0);
+      setSolvedRiddles(new Set());
+      setIsQuestActive(true);
+      
+      // Generate all riddles at once
+      console.log("🎭 Generating all riddles...");
+      setIsGeneratingRiddles(true);
+      
+      try {
+        const riddlesResponse = await generateAllRiddles();
+        const generatedQuests = riddlesResponse.quests || [];
+        
+        const riddleArray = generatedQuests.map((q: any) => q.riddle);
+        console.log(`✅ Generated ${riddleArray.length} riddles`);
+        
+        setRiddles(riddleArray);
+      } catch (error) {
+        console.error("Failed to generate riddles:", error);
+        // Fallback to placeholders
+        setRiddles(new Array(quests.length).fill("A mysterious place awaits you..."));
+      } finally {
+        setIsGeneratingRiddles(false);
+      }
+      
+      console.log("🎯 Quest started successfully!");
+    } catch (error) {
+      console.error("❌ Failed to start quest:", error);
+      // Fallback to mock data if backend fails
+      const generatedRiddles = generateRiddles(selectedCategory!, locationCount);
+      setRiddles(generatedRiddles);
+      
+      const mockLocations = generatedRiddles.map((_, index) => ({
+        name: `${selectedCategory} Location ${index + 1}`,
+        description: `A wonderful place to explore and discover. This location offers unique experiences and memorable moments.`,
+        image: `/category_photo/${selectedCategory?.toLowerCase().split(' ')[0]}.jpg` || '/category_photo/restaurant.jpg'
+      }));
+      setLocations(mockLocations);
+      
+      setCurrentRiddleIndex(0);
+      setSolvedRiddles(new Set());
+      setIsQuestActive(true);
+    }
   };
 
   const handleCameraClick = () => {
@@ -168,14 +293,17 @@ export default function ExplorePage() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            const userLocation = {
+            const currentUserLocation = {
               lat: position.coords.latitude,
               lng: position.coords.longitude,
             };
+            
+            // Store user location in state
+            setUserLocation(currentUserLocation);
 
             // Initialize map centered on user location
             const map = new google.maps.Map(mapRef.current!, {
-              center: userLocation,
+              center: currentUserLocation,
               zoom: 15,
               disableDefaultUI: true,
               zoomControl: true,
@@ -195,7 +323,7 @@ export default function ExplorePage() {
 
             // Add user location marker
             const userMarker = new google.maps.Marker({
-              position: userLocation,
+              position: currentUserLocation,
               map: map,
               title: "Your Location",
               icon: {
@@ -246,6 +374,40 @@ export default function ExplorePage() {
 
     initMap();
   }, []);
+
+  // Display quest location markers on the map
+  useEffect(() => {
+    if (!googleMapRef.current || !isQuestActive || questLocations.length === 0) {
+      return;
+    }
+
+    // Clear existing quest markers
+    questMarkersRef.current.forEach(marker => marker.setMap(null));
+    questMarkersRef.current = [];
+
+    // Create circle markers for each quest location
+    questLocations.forEach((coords, index) => {
+      const circle = new google.maps.Circle({
+        strokeColor: solvedRiddles.has(index) ? '#7bc950' : '#FFA500',
+        strokeOpacity: 0.6,
+        strokeWeight: 2,
+        fillColor: solvedRiddles.has(index) ? '#7bc950' : '#FFA500',
+        fillOpacity: 0.4,
+        map: googleMapRef.current,
+        center: { lat: coords.lat, lng: coords.lng },
+        radius: 100, // 100 meters radius
+      });
+
+      // Store the circle in the markers ref (they work the same way)
+      questMarkersRef.current.push(circle as any);
+    });
+
+    // Cleanup function
+    return () => {
+      questMarkersRef.current.forEach(marker => marker.setMap(null));
+      questMarkersRef.current = [];
+    };
+  }, [isQuestActive, questLocations, locations, solvedRiddles]);
 
   return (
     <div className="relative h-screen w-screen overflow-hidden">
@@ -383,12 +545,33 @@ export default function ExplorePage() {
                   // Riddle View
                   <>
                     <div className="bg-white rounded-xl p-6 shadow-lg max-w-md w-full flex-1 flex items-center justify-center">
-                      <div className="text-center space-y-3">
-                        <div className="text-4xl">🎯</div>
-                        <p className="text-base text-zinc-700 leading-relaxed italic">
-                          {riddles[currentRiddleIndex]}
-                        </p>
-                      </div>
+                      {isGeneratingRiddles ? (
+                        <div className="text-center space-y-4">
+                          <div className="relative inline-block">
+                            <Loader2 className="h-12 w-12 text-[#7bc950] animate-spin" />
+                          </div>
+                          <div className="space-y-2">
+                            <p className="text-lg font-semibold text-zinc-800">
+                              Crafting Your Riddles...
+                            </p>
+                            <p className="text-sm text-zinc-600">
+                              The Mysterious Pathfinder is preparing {locationCount} cryptic clue{locationCount > 1 ? 's' : ''} for your adventure
+                            </p>
+                          </div>
+                          <div className="flex items-center justify-center gap-1 mt-4">
+                            <div className="w-2 h-2 bg-[#7bc950] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                            <div className="w-2 h-2 bg-[#7bc950] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                            <div className="w-2 h-2 bg-[#7bc950] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center space-y-3">
+                          <div className="text-4xl">🎯</div>
+                          <p className="text-base text-zinc-700 leading-relaxed italic">
+                            {riddles[currentRiddleIndex]}
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Camera Button */}
@@ -403,7 +586,8 @@ export default function ExplorePage() {
                       />
                       <Button
                         onClick={handleCameraClick}
-                        className="w-full bg-[#7bc950] hover:bg-[#7ce577] text-white py-6 text-lg font-semibold rounded-xl shadow-lg"
+                        disabled={isGeneratingRiddles}
+                        className="w-full bg-[#7bc950] hover:bg-[#7ce577] text-white py-6 text-lg font-semibold rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Camera className="h-6 w-6 mr-2" />
                         Take Photo to Verify
@@ -500,7 +684,7 @@ export default function ExplorePage() {
                 </div>
               </div>
             </>
-          ) : (
+          ) : !isGeneratingRiddles ? (
             // Step 2: Location Count Selection
             <>
               <div className="bg-[#7bc950] px-6 py-4">
@@ -552,7 +736,7 @@ export default function ExplorePage() {
                 </div>
               </div>
             </>
-          )}
+          ) : null}
         </DrawerContent>
       </Drawer>
 
