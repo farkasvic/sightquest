@@ -163,7 +163,21 @@
       <span id="distance">--- m</span>
       <p id="status">Waiting for GPS...</p>
 
-      <button id="cam-btn" onclick="captureTarget()">📸 FOUND IT</button>
+      <input
+        type="file"
+        id="camera-input"
+        accept="image/*"
+        capture="environment"
+        style="display: none"
+        onchange="processImage()"
+      />
+
+      <button
+        id="cam-btn"
+        onclick="document.getElementById('camera-input').click()"
+      >
+        📸 SNAP PHOTO
+      </button>
     </div>
 
     <div class="card">
@@ -249,6 +263,7 @@
           document.getElementById("status").innerText = data.message;
 
           const btn = document.getElementById("cam-btn");
+          // Logic: Enable button if close OR God Mode is on
           if (data.can_verify) {
             btn.classList.add("active");
             btn.disabled = false;
@@ -266,16 +281,66 @@
           "GPS Error: " + error.message;
       }
 
-      // --- 2. GAMEPLAY LOGIC (Capturing & Stamps) ---
+      // --- 2. GAMEPLAY LOGIC (Image Verification) ---
 
-      // Called when user clicks "FOUND IT" for the main target
-      async function captureTarget() {
-        // In a real app, this launches the camera.
-        // For now, we instantly claim the stamp for the current target.
-        await simulateFind("UBC Clock Tower", "History");
+      async function processImage() {
+        const input = document.getElementById("camera-input");
+        if (input.files.length === 0) return;
+
+        const file = input.files[0];
+        const btn = document.getElementById("cam-btn");
+
+        // UI: Show Loading
+        const originalText = btn.innerText;
+        btn.innerText = "🤖 Analyzing...";
+        btn.disabled = true;
+        btn.style.backgroundColor = "#6f42c1"; // Purple for AI
+
+        // Convert Image to Base64
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+
+        reader.onload = async function () {
+          const base64String = reader.result;
+
+          // Get GPS location for final check
+          navigator.geolocation.getCurrentPosition(async (position) => {
+            try {
+              const res = await fetch("/verify-image", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  image_b64: base64String,
+                  lat: position.coords.latitude,
+                  lon: position.coords.longitude,
+                }),
+              });
+
+              const data = await res.json();
+
+              if (data.success) {
+                alert("✅ MATCH CONFIRMED!\n" + data.message);
+                if (data.new_badge)
+                  alert("🎉 BADGE UNLOCKED: " + data.new_badge);
+                loadProfile(); // Refresh Passport
+              } else {
+                alert("❌ " + data.message);
+              }
+            } catch (e) {
+              console.error(e);
+              alert("Error uploading image.");
+            } finally {
+              // Reset Button UI
+              btn.innerText = originalText;
+              btn.disabled = false;
+              btn.style.backgroundColor = ""; // Reset color
+              input.value = ""; // Clear input so we can take another photo
+            }
+          });
+        };
       }
 
-      // Generic function to add a stamp (used by Main Button AND Demo Buttons)
+      // --- 3. DEMO/SIMULATION LOGIC ---
       async function simulateFind(name, category) {
         try {
           const res = await fetch("/collect-stamp", {
@@ -288,30 +353,23 @@
           if (data.new_badge) {
             alert("🎉 BADGE UNLOCKED: " + data.new_badge + " 🎉");
           } else {
-            // Simple toast or alert
             alert(data.message);
           }
-
-          // Reload the passport UI to show the new item
           loadProfile();
         } catch (err) {
           console.error("Failed to collect stamp", err);
         }
       }
 
-      // --- 3. PASSPORT UI LOGIC ---
+      // --- 4. PASSPORT UI LOGIC ---
       async function loadProfile() {
         try {
           const res = await fetch("/my-profile");
           const data = await res.json();
 
-          // --- FIX FOR BADGES ---
+          // Badges
           const badgeDiv = document.getElementById("badges-container");
-
-          // 1. Always clear the current list first
           badgeDiv.innerHTML = "";
-
-          // 2. If empty, show placeholder. If not, show badges.
           if (data.badges.length === 0) {
             badgeDiv.innerHTML =
               '<small style="color:#999">No badges yet...</small>';
@@ -321,10 +379,9 @@
             });
           }
 
-          // --- STAMPS RENDER ---
+          // Stamps
           const listDiv = document.getElementById("stamps-list");
           listDiv.innerHTML = "";
-
           if (data.stamps.length === 0) {
             listDiv.innerHTML = "<small>No stamps collected.</small>";
           } else {
@@ -333,10 +390,10 @@
               .reverse()
               .forEach((s) => {
                 listDiv.innerHTML += `
-                            <div class="stamp-item">
-                                <span><b>${s.name}</b></span> 
-                                <span class="stamp-cat">${s.category}</span>
-                            </div>`;
+                    <div class="stamp-item">
+                        <span><b>${s.name}</b></span> 
+                        <span class="stamp-cat">${s.category}</span>
+                    </div>`;
               });
           }
         } catch (e) {
@@ -344,7 +401,7 @@
         }
       }
 
-      // --- 4. GEMINI RIDDLE LOGIC ---
+      // --- 5. EXTRAS ---
       async function loadRiddle() {
         try {
           const res = await fetch("/get-riddle");
@@ -355,7 +412,6 @@
         }
       }
 
-      // --- 5. GOD MODE & RESET ---
       async function toggleGodMode() {
         try {
           const response = await fetch("/toggle-god-mode?enable=true", {
@@ -370,17 +426,16 @@
 
       async function resetPassport() {
         if (!confirm("Are you sure? This will wipe all stamps.")) return;
-
         await fetch("/reset-db", { method: "POST" });
         alert("Passport Cleared!");
-        loadProfile(); // Refresh the UI immediately
+        loadProfile();
       }
 
       // --- INIT ---
       document.addEventListener("DOMContentLoaded", () => {
         loadProfile();
         updateLocation();
-        loadRiddle(); // <--- Fetch the rhyme on load
+        loadRiddle();
       });
 
       // Start GPS loop
