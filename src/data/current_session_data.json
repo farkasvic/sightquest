@@ -1,32 +1,61 @@
 {
   "session": {
-    "huntId": "hunt_1768763370",
+    "huntId": "hunt_1768765636",
     "startLocation": {
-      "lat": 49.26207263882109,
-      "lng": -123.24538595409598
+      "lat": 49.261371278580576,
+      "lng": -123.24655692558298
     },
     "radiusMeters": 2000,
     "category": "Food",
     "currentQuestIndex": 0,
     "totalPoints": 0,
-    "startedAt": "2026-01-18T19:09:30.969192Z",
-    "updatedAt": "2026-01-18T19:09:30.969192Z",
-    "completedAt": "2026-01-18T19:09:56.406735"
+    "startedAt": "2026-01-18T19:47:16.117129Z",
+    "updatedAt": "2026-01-18T19:47:16.117129Z"
   },
   "quests": [
     {
       "id": "quest_1",
-      "sessionId": "hunt_1768763370",
-      "name": "Firehouse Subs Vancouver UBC",
+      "sessionId": "hunt_1768765636",
+      "name": "Browns Crafthouse UBC",
       "location": {
-        "lat": 49.2610689,
-        "lng": -123.2463886
+        "lat": 49.2661875,
+        "lng": -123.2488395
       },
       "category": "Food",
-      "riddle": "Hark, seeker of sustenance and savory delight!\nWhere hunger calls, and warmth you seek to *find*,\nA sizzling bounty, crafted one of a *kind*,\nBeneath the wing where student minds *convene*,\nThere waits a fiery comfort, for a hungry *scene*.",
-      "status": "completed",
+      "riddle": "Where amber glows and hearty fare,\nWithin the scholar's bustling lair,\nWhere laughter lifts upon the air,\nA crafted joy beyond compare.",
+      "status": "active",
       "points": 100,
       "order": 1,
+      "awardedPoints": 0
+    },
+    {
+      "id": "quest_2",
+      "sessionId": "hunt_1768765636",
+      "name": "Wildlight Kitchen + Bar",
+      "location": {
+        "lat": 49.2657805,
+        "lng": -123.2368531
+      },
+      "category": "Food",
+      "riddle": "Where hungry travelers find their **way**,\nA guiding gleam at close of **day**.\nWith savory scents and clinking **ware**,\nA welcoming warmth beyond **compare**.",
+      "status": "locked",
+      "points": 100,
+      "order": 2,
+      "awardedPoints": 0
+    },
+    {
+      "id": "quest_3",
+      "sessionId": "hunt_1768765636",
+      "name": "Sports Illustrated Clubhouse",
+      "location": {
+        "lat": 49.2542486,
+        "lng": -123.2357293
+      },
+      "category": "Food",
+      "riddle": "Where feats of strength, both swift and bold,\nWhose storied images are told,\nHere, savory plates delight the tongue,\nBeside the gates where anthems sung.",
+      "status": "locked",
+      "points": 100,
+      "order": 3,
       "awardedPoints": 0
     }
   ]

@@ -320,87 +320,53 @@ export default function ExplorePage() {
     const initializeMap = () => {
       if (!mapRef.current) return;
 
-      // Get user's current location
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const currentUserLocation = {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
-            };
-            
-            // Store user location in state
-            setUserLocation(currentUserLocation);
+      // Use fixed location
+      const currentUserLocation = {
+        lat: 49.261371278580576,
+        lng: -123.24655692558298,
+      };
+      
+      // Store user location in state
+      setUserLocation(currentUserLocation);
 
-            // Initialize map centered on user location
-            const map = new google.maps.Map(mapRef.current!, {
-              center: currentUserLocation,
-              zoom: 15,
-              disableDefaultUI: true,
-              zoomControl: true,
-              zoomControlOptions: {
-                position: google.maps.ControlPosition.RIGHT_CENTER,
-              },
-              styles: [
-                {
-                  featureType: "poi",
-                  elementType: "labels",
-                  stylers: [{ visibility: "on" }],
-                },
-              ],
-            });
-
-            googleMapRef.current = map;
-
-            // Add user location marker
-            const userMarker = new google.maps.Marker({
-              position: currentUserLocation,
-              map: map,
-              title: "Your Location",
-              icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 10,
-                fillColor: "#7bc950",
-                fillOpacity: 1,
-                strokeColor: "#ffffff",
-                strokeWeight: 3,
-              },
-            });
-
-            userMarkerRef.current = userMarker;
-
-            setIsMapLoading(false);
+      // Initialize map centered on user location
+      const map = new google.maps.Map(mapRef.current!, {
+        center: currentUserLocation,
+        zoom: 15,
+        disableDefaultUI: true,
+        zoomControl: true,
+        zoomControlOptions: {
+          position: google.maps.ControlPosition.RIGHT_CENTER,
+        },
+        styles: [
+          {
+            featureType: "poi",
+            elementType: "labels",
+            stylers: [{ visibility: "on" }],
           },
-          (error) => {
-            console.error("Error getting location:", error);
-            // Default to a location if user denies geolocation
-            const defaultLocation = { lat: 37.7749, lng: -122.4194 }; // San Francisco
-            
-            const map = new google.maps.Map(mapRef.current!, {
-              center: defaultLocation,
-              zoom: 13,
-              disableDefaultUI: true,
-              zoomControl: true,
-            });
+        ],
+      });
 
-            googleMapRef.current = map;
-            setIsMapLoading(false);
-          }
-        );
-      } else {
-        // Browser doesn't support geolocation
-        const defaultLocation = { lat: 37.7749, lng: -122.4194 };
-        
-        const map = new google.maps.Map(mapRef.current!, {
-          center: defaultLocation,
-          zoom: 13,
-          disableDefaultUI: true,
-          zoomControl: true,
-        });
+      googleMapRef.current = map;
 
-        googleMapRef.current = map;
-        setIsMapLoading(false);
-      }
+      // Add user location marker
+      const userMarker = new google.maps.Marker({
+        position: currentUserLocation,
+        map: map,
+        title: "Your Location",
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 10,
+          fillColor: "#7bc950",
+          fillOpacity: 1,
+          strokeColor: "#ffffff",
+          strokeWeight: 3,
+        },
+      });
+
+      userMarkerRef.current = userMarker;
+
+      setIsMapLoading(false);
     };
 
     initMap();
