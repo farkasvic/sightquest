@@ -1,81 +1,58 @@
-// 1. Get GPS from Browser
-function updateLocation() {
-  if (!navigator.geolocation) {
-    document.getElementById("status").innerText = "GPS not supported";
-    return;
-  }
-
-  navigator.geolocation.getCurrentPosition(sendPosition, showError, {
-    enableHighAccuracy: true,
-  });
-}
-
+// ✅ FILENAME: src/static/game.js
 let map;
 let userMarker;
-let originLocation = null; // store the user’s starting point
-let originMarker;
-let selectedCategory = "Landmark";
 
-function initMap(lat, lng) {
-  if (!map) {
-    // First time → create map and marker
-    map = new google.maps.Map(document.getElementById("map"), {
-      center: { lat, lng },
-      zoom: 15,
-    });
+function initMap() {
+  const startLoc = { lat: 49.2606, lng: -123.246 };
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: startLoc,
+    zoom: 15,
+    mapId: "YOUR_MAP_ID",
+    disableDefaultUI: true,
+  });
 
-    userMarker = new google.maps.Marker({
-      position: { lat, lng },
-      map: map,
-      title: "You are here",
+  userMarker = new google.maps.Marker({
+    position: startLoc,
+    map: map,
+    title: "You",
+    icon: {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 7,
+      fillColor: "#4285F4",
+      fillOpacity: 1,
+      strokeWeight: 2,
+      strokeColor: "white",
+    },
+  });
+
+  if (navigator.geolocation) {
+    navigator.geolocation.watchPosition(sendPosition, console.error, {
+      enableHighAccuracy: true,
+      maximumAge: 1000,
     });
-  } else {
-    // Later → move marker and pan map
-    userMarker.setPosition({ lat, lng });
-    map.panTo({ lat, lng });
+  }
+
+  loadCurrentRiddle();
+  updatePassportUI();
+}
+
+async function loadCurrentRiddle() {
+  try {
+    const response = await fetch("/get-riddle");
+    const data = await response.json();
+    const box = document.getElementById("riddle-text");
+    if (box) box.innerText = data.riddle;
+  } catch (e) {
+    console.error("Riddle error", e);
   }
 }
 
-function getSelectedCategory() {
-  return selectedCategory;
-}
-
-function setCategory(category) {
-  selectedCategory = category;
-  console.log("Category set to:", selectedCategory);
-
-  // UI highlight
-  document.querySelectorAll("#category-buttons button").forEach((btn) => {
-    btn.classList.remove("active");
-  });
-
-  event.target.classList.add("active");
-}
-
-// 2. Send GPS to Python Backend
 async function sendPosition(position) {
   const lat = position.coords.latitude;
   const lon = position.coords.longitude;
-
-  // ✅ Store origin if not set yet
-  if (!originLocation) {
-    originLocation = { lat, lon };
-    console.log("Origin location set:", originLocation);
-
-    initMap(lat, lon);
-
-    originMarker = new google.maps.Marker({
-      position: originLocation,
-      map: map,
-      title: "Origin",
-      icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
-    });
-
-    // await getRandomLandmarks(originLocation.lat, originLocation.lon, 2000, 4);
-  }
-
-  // Update map marker
-  initMap(lat, lon);
+  const pos = { lat, lon };
+  if (userMarker) userMarker.setPosition(pos);
+  if (map) map.setCenter(pos);
 
   try {
     const response = await fetch("/check-proximity", {
@@ -83,7 +60,6 @@ async function sendPosition(position) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ lat: lat, lon: lon }),
     });
-
     const data = await response.json();
 
     document.getElementById("distance").innerText =
@@ -91,141 +67,102 @@ async function sendPosition(position) {
     document.getElementById("status").innerText = data.message;
 
     const btn = document.getElementById("cam-btn");
-    btn.classList.toggle("active", data.can_verify);
-    btn.disabled = !data.can_verify;
-  } catch (error) {
-    console.error("Error talking to Python:", error);
-  }
-}
+    const btnText = document.getElementById("btn-text");
 
-function showError(error) {
-  document.getElementById("status").innerText = "GPS Error: " + error.message;
-}
-
-// GOD MODE FUNCTION
-// async function toggleGodMode() {
-//   try {
-//     // Toggles on/off (you can adjust the logic if you want strict On/Off)
-//     const response = await fetch("/toggle-god-mode?enable=true", {
-//       method: "POST",
-//     });
-//     const data = await response.json();
-//     alert("God Mode Enabled: You can now verify anywhere.");
-
-//     // Force an immediate update so the button turns blue instantly
-//     updateLocation();
-//   } catch (error) {
-//     console.error("God Mode failed:", error);
-//   }
-// }
-
-let gameLandmarks = []; // stores the 4 randomly picked landmarks
-
-function startSession(radiusM, amountOfSpot) {
-  console.log("Category button clicked");
-  // Reset old data if needed
-  gameLandmarks = [];
-
-  // Re-generate landmarks using current origin
-  if (originLocation) {
-    getRandomLandmarks(
-      originLocation.lat,
-      originLocation.lon,
-      radiusM,
-      amountOfSpot,
-    );
-  } else {
-    console.warn("Origin not set yet");
-  }
-}
-
-// 4️⃣ Fetch landmarks using REST API
-async function getRandomLandmarks(
-  originLat,
-  originLng,
-  radius = 2000,
-  count = 4,
-) {
-  try {
-    const category = getSelectedCategory();
-    console.log("Selected category:", category);
-
-    // Call your backend instead of Google directly
-    const response = await fetch(
-      `/get-landmarks?lat=${originLat}&lng=${originLng}&radius=${radius}&category=${category}`,
-    );
-    const data = await response.json();
-    console.log("data", data);
-    if (!data.results || data.results.length === 0) {
-      console.warn("No landmarks found nearby.");
-      return;
+    if (btn) {
+      if (data.can_verify) {
+        btn.disabled = false;
+        btn.style.opacity = "1";
+        btn.style.cursor = "pointer";
+        btn.style.backgroundColor = "#10b981";
+        if (btnText) btnText.innerText = "📸 Snap Photo";
+        btn.onclick = () => document.getElementById("camera-input").click();
+      } else {
+        btn.disabled = true;
+        btn.style.opacity = "0.5";
+        btn.style.cursor = "not-allowed";
+        btn.style.backgroundColor = "black";
+        if (btnText) btnText.innerText = "Get Closer";
+        btn.onclick = null;
+      }
     }
+  } catch (error) {
+    console.error("GPS Error:", error);
+  }
+}
 
-    const shuffled = data.results.sort(() => 0.5 - Math.random());
-    const selected = shuffled.slice(0, count);
+window.processImage = function () {
+  const input = document.getElementById("camera-input");
+  const file = input.files[0];
+  if (!file) return;
 
-    gameLandmarks = selected;
-    console.log("gameLandmards", gameLandmarks);
+  const btn = document.getElementById("cam-btn");
+  if (btn) btn.innerText = "Verifying...";
 
-    const payload = {
-      startLocation: {
-        lat: originLocation.lat,
-        lng: originLocation.lon,
-      },
-      radiusMeters: radius,
-      category: getSelectedCategory(),
-      landmarks: selected.map((place, index) => ({
-        name: place.name,
-        lat: place.geometry.location.lat,
-        lng: place.geometry.location.lng,
-        order: index + 1,
-      })),
-    };
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    verifyImageWithBackend(e.target.result);
+  };
+  reader.readAsDataURL(file);
+};
 
-    await fetch("/start-session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    console.log("Landmarks sent to backend");
-
-    console.log("===== Random Landmarks Selected =====");
-    selected.forEach((place, index) => {
-      console.log(
-        `${index + 1}: ${place.name} | ${place.vicinity} | Lat: ${place.geometry.location.lat}, Lng: ${place.geometry.location.lng}`,
-      );
-
-      new google.maps.Marker({
-        position: {
-          lat: place.geometry.location.lat,
-          lng: place.geometry.location.lng,
-        },
-        map: map,
-        title: place.name,
-        icon: `http://maps.google.com/mapfiles/ms/icons/${["blue", "green", "purple", "orange"][index]}-dot.png`,
-        label: `${index + 1}`,
+async function verifyImageWithBackend(base64Image) {
+  navigator.geolocation.getCurrentPosition(async (position) => {
+    try {
+      const response = await fetch("/verify-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image_b64: base64Image,
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+        }),
       });
-    });
-    console.log("====================================");
-  } catch (err) {
-    console.error("Failed to fetch landmarks from backend:", err);
-  }
+      const result = await response.json();
+      if (result.success) {
+        alert("✅ SUCCESS: " + result.message);
+        window.location.reload();
+      } else {
+        alert("❌ FAIL: " + result.message);
+        window.location.reload();
+      }
+    } catch (e) {
+      alert("Error verifying image.");
+      window.location.reload();
+    }
+  });
 }
 
-async function completeSession() {
+// --- HACKATHON TOOLS ---
+window.addDemoStamp = async function (name, category) {
+  await fetch("/collect-stamp", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ poi_name: name, category: category }),
+  });
+  updatePassportUI();
+};
+
+window.resetDatabase = async function () {
+  if (!confirm("Reset all stamps?")) return;
+  await fetch("/reset-db", { method: "POST" });
+  window.location.reload();
+};
+
+async function updatePassportUI() {
   try {
-    const res = await fetch("/complete-session", {
-      method: "POST",
+    const res = await fetch("/my-profile");
+    const user = await res.json();
+    const list = document.getElementById("passport-list");
+    if (!list) return;
+    list.innerHTML = "";
+    user.stamps.forEach((stamp) => {
+      const item = document.createElement("div");
+      item.className = "p-2 bg-gray-100 rounded mb-2 border";
+      item.innerHTML = `<strong>${stamp.name}</strong> <span class="text-xs text-gray-500">${stamp.category}</span>`;
+      list.appendChild(item);
     });
-
-    const data = await res.json();
-    console.log("Session archived:", data);
-  } catch (err) {
-    console.error("Failed to complete session:", err);
-  }
+  } catch (e) {}
 }
 
-// Run loop every 2 seconds
-setInterval(updateLocation, 2000);
-// initMap();
+window.initMap = initMap;

@@ -1,28 +1,28 @@
 {
   "session": {
-    "huntId": "hunt_1768750630",
+    "huntId": "hunt_1768755279",
     "startLocation": {
-      "lat": 49.26207904845654,
-      "lng": -123.24539575891086
+      "lat": 49.262243463260226,
+      "lng": -123.24522895897142
     },
     "radiusMeters": 2000,
-    "category": "Food",
+    "category": "Cafe",
     "currentQuestIndex": 0,
     "totalPoints": 0,
-    "startedAt": "2026-01-18T15:37:10.142826Z",
-    "updatedAt": "2026-01-18T15:37:10.142826Z"
+    "startedAt": "2026-01-18T16:54:39.565596Z",
+    "updatedAt": "2026-01-18T16:54:39.565596Z"
   },
   "quests": [
     {
       "id": "quest_1",
-      "sessionId": "hunt_1768750630",
-      "name": "Feast",
+      "sessionId": "hunt_1768755279",
+      "name": "Blue Chip Cafe",
       "location": {
-        "lat": 49.2578729,
-        "lng": -123.2530618
+        "lat": 49.266614,
+        "lng": -123.2498741
       },
-      "category": "Food",
-      "riddle": "Find the place where history whispers.",
+      "category": "Cafe",
+      "riddle": "Where roasted scents begin to call,\nAnd murmurs mingle off the wall,\nBeneath a structure standing tall,\nYou'll find your solace, lest you fall.",
       "status": "active",
       "points": 100,
       "order": 1,
@@ -30,14 +30,14 @@
     },
     {
       "id": "quest_2",
-      "sessionId": "hunt_1768750630",
-      "name": "Nori Bento & Udon",
+      "sessionId": "hunt_1768755279",
+      "name": "Bean Around The World Coffee House & Bistro",
       "location": {
-        "lat": 49.2662263,
-        "lng": -123.2474468
+        "lat": 49.2588643,
+        "lng": -123.2480615
       },
-      "category": "Food",
-      "riddle": "Find the place where history whispers.",
+      "category": "Cafe",
+      "riddle": null,
       "status": "locked",
       "points": 100,
       "order": 2,
@@ -45,14 +45,14 @@
     },
     {
       "id": "quest_3",
-      "sessionId": "hunt_1768750630",
-      "name": "Gather at Vanier",
+      "sessionId": "hunt_1768755279",
+      "name": "Starbucks",
       "location": {
-        "lat": 49.2646468,
-        "lng": -123.2583108
+        "lat": 49.25469,
+        "lng": -123.23651
       },
-      "category": "Food",
-      "riddle": "Find the place where history whispers.",
+      "category": "Cafe",
+      "riddle": null,
       "status": "locked",
       "points": 100,
       "order": 3,
@@ -60,14 +60,14 @@
     },
     {
       "id": "quest_4",
-      "sessionId": "hunt_1768750630",
-      "name": "Seoul Hotdogs",
+      "sessionId": "hunt_1768755279",
+      "name": "The Mighty Oak @ the Well Cafe",
       "location": {
-        "lat": 49.2664755,
-        "lng": -123.249477
+        "lat": 49.265648,
+        "lng": -123.244093
       },
-      "category": "Food",
-      "riddle": "Find the place where history whispers.",
+      "category": "Cafe",
+      "riddle": null,
       "status": "locked",
       "points": 100,
       "order": 4,

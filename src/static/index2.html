@@ -1,30 +1,44 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <link rel="stylesheet" href="/static/style.css" />
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>SightQuest</title>
-    <link rel='stylesheet' href='/static/style.css' />
     <script
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC_SY-hHyH0FqMRqEv1VKa0gV1b4bqPrDk&libraries=places&v=weekly"
-        async></script>
-</head>
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC_SY-hHyH0FqMRqEv1VKa0gV1b4bqPrDk&libraries=places&v=weekly&callback=initMap"
+      async
+      defer
+    ></script>
 
-<body>
+    <style>
+      /* Ensure map has height */
+      #map {
+        height: 60vh;
+        width: 100%;
+        border-radius: 10px;
+        margin-bottom: 10px;
+      }
+      .active {
+        background-color: #3b82f6;
+        color: white;
+        border-color: #3b82f6;
+      }
+    </style>
+  </head>
+
+  <body>
     <div id="map"></div>
     <div id="category-buttons">
-        <button onclick="setCategory('Park')">🏞️ Park</button>
-        <button onclick="setCategory('History')">🏛️ History</button>
-        <button onclick="setCategory('Food')">🍔 Food</button>
-        <button onclick="setCategory('Cafe')">☕ Cafe</button>
-        <button onclick="setCategory('Landmark')" class="active">📍 Landmark</button>
+      <button onclick="setCategory('Park')">🏞️ Park</button>
+      <button onclick="setCategory('History')">🏛️ History</button>
+      <button onclick="setCategory('Food')">🍔 Food</button>
+      <button onclick="setCategory('Cafe')">☕ Cafe</button>
+      <button onclick="setCategory('Landmark')" class="active">
+        📍 Landmark
+      </button>
     </div>
 
-
-    <button onclick="startSession(2000,4)">Apply Category</button>
+    <button onclick="startSession(2000, 4)">Apply Category</button>
     <button onclick="completeSession()">Complete Category</button>
-    <script src="/static/app.js"></script>
-</body>
-
+    <script src="/static/planner.js"></script>
+  </body>
 </html>

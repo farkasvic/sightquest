@@ -1,12 +1,12 @@
 import json
 import os
-from pathlib import Path
-from dotenv import load_dotenv
-import base64
-import warnings
 import time
 import shutil
+import base64
+import warnings
+from pathlib import Path
 from datetime import datetime
+from dotenv import load_dotenv
 from google import genai
 from google.genai import types 
 from fastapi import FastAPI, Query, Body, HTTPException
@@ -15,46 +15,40 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from pymongo import MongoClient
 
-from .geocalc import calculate_distance 
+# Attempt to import geo calculator
+try:
+    from .geocalc import calculate_distance
+except ImportError:
+    from geocalc import calculate_distance 
+
 import requests
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-
 app = FastAPI()
 
+# --- FILE SYSTEM CONFIG ---
 DATA_DIR = Path("src/data")
+DATA_DIR.mkdir(parents=True, exist_ok=True) # Ensure dir exists
+
 CURRENT_SESSION_FILE = DATA_DIR / "current_session_data.json"
 SESSIONS_DIR = DATA_DIR / "sessions"
+SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
 
-# --- ROBUST CONFIG (Fixes "Missing Key" errors) ---
-# 1. Find the .env file relative to this script (src/main.py)
-#    We go 'parent' (src) -> 'parent' (root) -> '.env'
+# --- CONFIG ---
 env_path = Path(__file__).parent.parent / '.env'
-
-# 2. Load it explicitly
 load_dotenv(dotenv_path=env_path)
 
-# 3. Get the key
 api_key = os.getenv("GEMINI_API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-# 4. Debug Print (So you know if it worked)
 if not api_key:
-    print(f"⚠️ ERROR: Could not find .env file at: {env_path}")
-    print("⚠️ Make sure the file is named exactly '.env' (no .txt) and is in your project root.")
-    
-    raise ValueError("Stopping server: API Key is missing.")
+    # Fail-safe for hackathon if .env breaks
+    print("⚠️ WARNING: GEMINI_API_KEY missing.")
 else:
     print("✅ API Key loaded successfully!")
 
 # Initialize Client
 ai_client = genai.Client(api_key=api_key)
-
-# Global cache to save money/quota
-current_riddle_cache = {
-    "target_name": None,
-    "riddle_text": None
-}
 
 # MongoDB Config
 MONGO_URI = "mongodb+srv://farkasv_db_user:SW3aDB0E91ARyPdz@513cluster.lyvt3gy.mongodb.net/"
@@ -62,15 +56,9 @@ client = MongoClient(MONGO_URI)
 db = client["cityquest_db"]
 users_collection = db["users"]
 
-TARGET_POI = {
-    "lat": 49.2666, 
-    "lon": -123.2494, 
-    "name": "UBC Totem Pole", 
-    "category": "History"
-} 
+# Game Constants
 UNLOCK_RADIUS_METERS = 50 
-GOD_MODE = False 
-DB_FILE = "src/db.json"
+GOD_MODE = True 
 
 BADGE_RULES = {
     "Ranger": {"category": "Park", "count": 3},
@@ -78,14 +66,14 @@ BADGE_RULES = {
     "Foodie": {"category": "Food", "count": 3}
 }
 
+# ✅ FIX 2: Better Keywords so Google finds stuff
 CATEGORY_KEYWORDS = {
     "Park": "park",
-    "History": "history",
-    "Food": "food",
+    "History": "tourist_attraction", # 'history' returns 0 results often
+    "Food": "restaurant",
     "Cafe": "cafe",
-    "Landmark": "landmark",
+    "Landmark": "point_of_interest",
 }
-
 
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
 
@@ -103,6 +91,43 @@ class ImageRequest(BaseModel):
     lat: float
     lon: float
 
+# --- SESSION HELPERS ---
+def load_game_state():
+    if not CURRENT_SESSION_FILE.exists():
+        return None
+    try:
+        with open(CURRENT_SESSION_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error loading session: {e}")
+        return None
+
+def save_game_state(data):
+    with open(CURRENT_SESSION_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+def get_active_quest(game_data):
+    if not game_data or "quests" not in game_data:
+        return None
+    for quest in game_data["quests"]:
+        if quest["status"] == "active":
+            return quest
+    return None
+
+def advance_quest_stage(game_data):
+    quests = game_data.get("quests", [])
+    for i, quest in enumerate(quests):
+        if quest["status"] == "active":
+            quest["status"] = "completed"
+            if i + 1 < len(quests):
+                quests[i+1]["status"] = "active"
+                print(f"🔓 Unlocked Next Quest: {quests[i+1]['name']}")
+            else:
+                print("🎉 All Quests Completed!")
+                game_data["session"]["completedAt"] = datetime.utcnow().isoformat()
+            return True
+    return False
+
 # --- DATABASE HELPERS ---
 def get_current_user():
     user = users_collection.find_one({"_id": "demo_user"})
@@ -114,15 +139,8 @@ def get_current_user():
 def update_user_data(user_data):
     users_collection.replace_one({"_id": "demo_user"}, user_data)
 
-# --- MISSING HELPER FUNCTION RESTORED ---
 def process_stamp_logic(poi_name, category):
-    """
-    Reusable logic to add a stamp and check for badges.
-    Used by both /collect-stamp and /verify-image.
-    """
     user = get_current_user()
-    
-    # Check duplicate
     for s in user["stamps"]:
         if s["name"] == poi_name:
             return {"success": True, "message": "Stamp already collected!", "new_badge": None}
@@ -134,7 +152,6 @@ def process_stamp_logic(poi_name, category):
     }
     user["stamps"].append(new_stamp)
     
-    # Check Badges
     new_badge = None
     count = sum(1 for s in user["stamps"] if s["category"] == category)
     
@@ -156,157 +173,124 @@ async def read_index():
 
 @app.get("/get-riddle")
 def get_riddle():
-    global current_riddle_cache
-    
-    if current_riddle_cache["target_name"] == TARGET_POI["name"] and current_riddle_cache["riddle_text"]:
-        print("Returning Cached Riddle (Saving Quota!)")
-        return {"riddle": current_riddle_cache["riddle_text"]}
-    
-    try:
-        print("Fetching fresh riddle from Gemini...")
-        prompt = (
-            f"""
-            <Role>
-            You are the "Mysterious Pathfinder", a mischievous wayfinding bard.
-            Your tone is ancient, playful, evocative, and easy to understand.
-            You enjoy teasing explorers just enough to make the discovery fun.
-            </Role>
+    game_data = load_game_state()
+    if not game_data:
+        return {"riddle": "No active session. Please start a new quest!"}
 
-            <Task>
-            Write a short, cryptic, FOUR-line riddle for a real world location.
-            The riddle should feel like part of a game and make the player curious to explore.
-            </Task>
+    active_quest = get_active_quest(game_data)
+    if not active_quest:
+        return {"riddle": "All quests completed! Check your passport."}
 
-            <Location_Context>
-            Place name: {TARGET_POI['name']}
-            Category: {TARGET_POI['category']}
-            </Location_Context>
+    if active_quest.get("riddle") == "Find the place where history whispers." or not active_quest.get("riddle"):
+        try:
+            print(f"🤖 Generating AI riddle for {active_quest['name']}...")
+            prompt = (f"""
+                <Role>
+                You are the "Mysterious Pathfinder", a mischievous wayfinding bard.
+                Your tone is ancient, playful, evocative, and easy to understand.
+                You enjoy teasing explorers just enough to make the discovery fun.
+                </Role>
 
-            <Constraints>
-            NEVER use the place name or obvious aliases. Do NOT mention the city, campus, or region. 
-            The final words of all lines must clearly rhyme. Include at least ONE concrete visual feature typical of the category.
-            Include at least ONE spatial or structural anchor that distinguishes this place nearby. 
-            Do all reasoning silently; output ONLY the four lines. The riddle should narrow the search, not obscure it.
-            </Constraints>
-            """
-        )
-        
-        response = ai_client.models.generate_content(
-            model='gemini-2.5-flash', 
-            contents=prompt
-        )
-        
-        if response.text:
-            current_riddle_cache["target_name"] = TARGET_POI["name"]
-            current_riddle_cache["riddle_text"] = response.text
-            return {"riddle": response.text}
-        
-    except Exception as e:
-        print(f"Gemini Error: {e}")
-        return {"riddle": "I stand tall with hands on my face,\nCounting the moments in this open place."}
-    
-# --- LEADERBOARD & XP ENDPOINT ---
-@app.get("/stats")
-def get_stats():
-    user = get_current_user()
-    
-    # 1. Calculate XP (Logic: 150 XP per Stamp, 500 XP per Badge)
-    xp = (len(user["stamps"]) * 150) + (len(user["badges"]) * 500)
-    
-    # 2. Fake Rivals for the Demo
-    leaderboard = [
-        {"rank": 1, "name": "AtlasTheGuide", "xp": 5200, "avatar": "🦁"},
-        {"rank": 2, "name": "CityWalker99", "xp": 3450, "avatar": "👟"},
-        {"rank": 3, "name": "FoodFindr", "xp": 2800, "avatar": "🍕"},
-        # We will insert the USER into this list dynamically below
-        {"rank": 5, "name": "RookieDave", "xp": 800, "avatar": "🌱"},
-    ]
-    
-    # 3. Add Current User
-    my_entry = {
-        "name": "You", 
-        "xp": xp, 
-        "avatar": "🦄", 
-        "is_me": True
-    }
-    leaderboard.append(my_entry)
-    
-    # 4. Re-sort Leaderboard by XP
-    leaderboard.sort(key=lambda x: x["xp"], reverse=True)
-    
-    # 5. Assign Ranks
-    for index, player in enumerate(leaderboard):
-        player["rank"] = index + 1
+                <Task>
+                Write a short, cryptic, FOUR-line riddle for a real world location.
+                The riddle should feel like part of a game and make the player curious to explore.
+                </Task>
+
+                <Location_Context>
+                Place name: {active_quest['name']}
+                Category: {active_quest['category']}
+                </Location_Context>
+
+                <Constraints>
+                NEVER use the place name or obvious aliases. Do NOT mention the city, campus, or region. 
+                The final words of all lines must clearly rhyme. Include at least ONE concrete visual feature typical of the category.
+                Include at least ONE spatial or structural anchor that distinguishes this place nearby. 
+                Do all reasoning silently; output ONLY the four lines. The riddle should narrow the search, not obscure it.
+                </Constraints>
+                """
+            )
+            response = ai_client.models.generate_content(
+                model='gemini-2.5-flash', 
+                contents=prompt
+            )
+            active_quest["riddle"] = response.text if response.text else "A mystery awaits..."
+            save_game_state(game_data)
+        except Exception as e:
+            print(f"AI Error: {e}")
+            active_quest["riddle"] = "A hidden gem awaits your steps,\nWhere secrets lie and memories slept."
 
     return {
-        "xp": xp,
-        "total_badges": len(user["badges"]),
-        "total_quests": len(user["stamps"]),
-        "leaderboard": leaderboard
+        "riddle": active_quest["riddle"],
+        "category": active_quest["category"],
+        "quest_id": active_quest["id"]
     }
-    
-
-@app.post("/verify-image")
-def verify_image(req: ImageRequest):
-    # 1. Location Check
-    dist = calculate_distance(req.lat, req.lon, TARGET_POI["lat"], TARGET_POI["lon"])
-    if dist > UNLOCK_RADIUS_METERS and not GOD_MODE:
-        return {"success": False, "message": f"Too far! Get closer to {TARGET_POI['name']}."}
-
-    try:
-        # 2. Decode Base64 Image
-        image_bytes = base64.b64decode(req.image_b64.split(",")[-1]) 
-        
-        # 3. Ask Gemini Vision
-        prompt = f"Look at this image. Is this a picture of {TARGET_POI['name']}? Answer YES or NO. If unsure, say NO."
-        
-        response = ai_client.models.generate_content(
-            model='gemini-2.5-flash', 
-            contents=[
-                types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"),
-                prompt
-            ]
-        )
-        
-        ai_reply = response.text.strip().upper()
-        print(f"AI Vision Verdict: {ai_reply}")
-
-        # 4. Handle Verdict
-        if "YES" in ai_reply:
-            # Now calling the function that actually exists!
-            result = process_stamp_logic(TARGET_POI["name"], TARGET_POI["category"])
-            return result
-        else:
-            return {"success": False, "message": "That doesn't look like the target. Try again!"}
-
-    except Exception as e:
-        print(f"Vision Error: {e}")
-        if GOD_MODE:
-             result = process_stamp_logic(TARGET_POI["name"], TARGET_POI["category"])
-             return result
-        return {"success": False, "message": "AI couldn't verify image."}
 
 @app.post("/check-proximity")
 def check_proximity(user_loc: UserLocation):
-    dist = calculate_distance(
-        user_loc.lat, user_loc.lon, 
-        TARGET_POI["lat"], TARGET_POI["lon"]
-    )
-    
+    game_data = load_game_state()
+    if not game_data:
+        return {"distance_remaining": 0, "can_verify": False, "message": "No active session."}
+
+    active_quest = get_active_quest(game_data)
+    if not active_quest:
+        return {"distance_remaining": 0, "can_verify": False, "message": "All quests completed!"}
+
+    target_lat = active_quest["location"]["lat"]
+    target_lon = active_quest["location"]["lng"]
+    dist = calculate_distance(user_loc.lat, user_loc.lon, target_lat, target_lon)
     can_verify = dist <= UNLOCK_RADIUS_METERS or GOD_MODE
 
     return {
         "distance_remaining": round(dist, 1),
         "can_verify": can_verify,
-        "message": "You are close! Look for the target." if can_verify else "Keep walking..."
+        "message": f"Near {active_quest['name']}!" if can_verify else "Keep exploring...",
+        "target_id": active_quest["id"]
     }
 
-@app.post("/toggle-god-mode")
-def toggle_god_mode(enable: bool):
-    global GOD_MODE
-    GOD_MODE = enable
-    return {"status": "success", "god_mode": GOD_MODE}
+@app.post("/verify-image")
+def verify_image(req: ImageRequest):
+    game_data = load_game_state()
+    if not game_data:
+        return {"success": False, "message": "No active session."}
 
+    active_quest = get_active_quest(game_data)
+    if not active_quest:
+        return {"success": False, "message": "No active quest found."}
+
+    target_lat = active_quest["location"]["lat"]
+    target_lon = active_quest["location"]["lng"]
+    dist = calculate_distance(req.lat, req.lon, target_lat, target_lon)
+
+    if dist > UNLOCK_RADIUS_METERS and not GOD_MODE:
+        return {"success": False, "message": "Too far from target!"}
+
+    success = False
+    if GOD_MODE:
+        print(f"⚡️ GOD MODE: Auto-approving {active_quest['name']}")
+        success = True
+    else:
+        try:
+            image_bytes = base64.b64decode(req.image_b64.split(",")[-1]) 
+            prompt = f"Look at this image. Is this a picture of {active_quest['name']}? Answer YES or NO. If unsure, say NO."
+            response = ai_client.models.generate_content(
+                model='gemini-2.5-flash', 
+                contents=[types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"), prompt]
+            )
+            ai_reply = response.text.strip().upper()
+            if "YES" in ai_reply:
+                success = True
+        except Exception as e:
+            print(f"Vision Error: {e}")
+            success = True
+
+    if success:
+        advance_quest_stage(game_data)
+        save_game_state(game_data)
+        return process_stamp_logic(active_quest["name"], active_quest["category"])
+    else:
+        return {"success": False, "message": "That doesn't look like the target. Try again!"}
+
+# --- LANDMARKS & SESSION ---
 
 @app.get("/get-landmarks")
 def get_landmarks(
@@ -315,7 +299,9 @@ def get_landmarks(
     radius: int = Query(2000),
     category: str = Query("Park")
 ):
-    keyword = CATEGORY_KEYWORDS.get(category, "landmark")
+    # ✅ FIX 3: Debug Prints to see what's happening
+    keyword = CATEGORY_KEYWORDS.get(category, "tourist_attraction")
+    print(f"🔍 Searching Google Maps: Loc={lat},{lng} | Key={keyword}")
 
     url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
     params = {
@@ -324,20 +310,27 @@ def get_landmarks(
         "keyword": keyword,
         "key": GOOGLE_API_KEY,
     }
-
     try:
         r = requests.get(url, params=params)
         r.raise_for_status()
-        return r.json()
-    except requests.RequestException as e:
-        return {"error": str(e)}
+        data = r.json()
         
+        # ✅ FIX 4: Check if Google Denied the Request
+        if "error_message" in data:
+            print(f"❌ Google API Error: {data['error_message']}")
+            return {"results": []} # Return empty so frontend handles it gracefully
+            
+        print(f"✅ Found {len(data.get('results', []))} results")
+        return data
+    except requests.RequestException as e:
+        print(f"❌ Network Error: {e}")
+        return {"error": str(e)}
+
 @app.post("/start-session")
 def start_session(data: dict = Body(...)):
     now = datetime.utcnow().isoformat() + "Z"
     hunt_id = f"hunt_{int(time.time())}"
 
-    # --- SESSION ---
     session = {
         "huntId": hunt_id,
         "startLocation": data["startLocation"],
@@ -349,73 +342,66 @@ def start_session(data: dict = Body(...)):
         "updatedAt": now,
     }
 
-    # --- QUESTS ---
     quests = []
-    for lm in data["landmarks"]:
+    for i, lm in enumerate(data["landmarks"]):
+        status = "active" if i == 0 else "locked"
         quests.append({
             "id": f"quest_{lm['order']}",
             "sessionId": hunt_id,
             "name": lm["name"],
-            "location": {
-                "lat": lm["lat"],
-                "lng": lm["lng"],
-            },
+            "location": {"lat": lm["lat"], "lng": lm["lng"]},
             "category": data["category"],
-            "riddle": "Find the place where history whispers.",  # placeholder
-            "status": "locked" if lm["order"] > 1 else "active",
+            "riddle": None,
+            "status": status,
             "points": 100,
             "order": lm["order"],
             "awardedPoints": 0,
         })
 
-    output = {
-        "session": session,
-        "quests": quests,
-    }
-
-    with open("src/data/current_session_data.json", "w", encoding="utf-8") as f:
-        json.dump(output, f, indent=2, ensure_ascii=False)
-
+    output = {"session": session, "quests": quests}
+    save_game_state(output)
+    print(f"📜 Session Started! {len(quests)} quests loaded.")
     return {"status": "session_created", "huntId": hunt_id}
 
 @app.post("/complete-session")
 def complete_session():
     if not CURRENT_SESSION_FILE.exists():
         raise HTTPException(status_code=404, detail="No active session found")
-
-    # Load current session
-    with open(CURRENT_SESSION_FILE, "r", encoding="utf-8") as f:
-        session_data = json.load(f)
-
+    session_data = load_game_state()
     hunt_id = session_data.get("session", {}).get("huntId")
-
     if not hunt_id:
         raise HTTPException(status_code=400, detail="huntId missing from session")
-
-    # Ensure sessions directory exists
-    SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
-
     target_file = SESSIONS_DIR / f"{hunt_id}.json"
-
-    # Optional: add completed timestamp
-    session_data["session"]["completedAt"] = (
-        __import__("datetime").datetime.utcnow().isoformat()
-    )
-
-    # Write archived copy
     with open(target_file, "w", encoding="utf-8") as f:
         json.dump(session_data, f, indent=2)
-
-    return {
-        "status": "completed",
-        "huntId": hunt_id,
-        "savedTo": str(target_file)
-    }
+    return {"status": "completed", "huntId": hunt_id, "savedTo": str(target_file)}
 
 @app.post("/collect-stamp")
 def collect_stamp(stamp: StampRequest):
-    # Simplified to use the helper function
     return process_stamp_logic(stamp.poi_name, stamp.category)
+
+@app.post("/toggle-god-mode")
+def toggle_god_mode(enable: bool = Query(...)):
+    global GOD_MODE
+    GOD_MODE = enable
+    print(f"⚡️ GOD MODE SET TO: {GOD_MODE}")
+    return {"status": "success", "god_mode": GOD_MODE}
+
+@app.get("/stats")
+def get_stats():
+    user = get_current_user()
+    xp = (len(user["stamps"]) * 150) + (len(user["badges"]) * 500)
+    leaderboard = [
+        {"rank": 1, "name": "AtlasTheGuide", "xp": 5200, "avatar": "🦁"},
+        {"rank": 2, "name": "CityWalker99", "xp": 3450, "avatar": "👟"},
+        {"rank": 3, "name": "FoodFindr", "xp": 2800, "avatar": "🍕"},
+        {"rank": 5, "name": "RookieDave", "xp": 800, "avatar": "🌱"},
+    ]
+    leaderboard.append({"name": "You", "xp": xp, "avatar": "🦄", "is_me": True})
+    leaderboard.sort(key=lambda x: x["xp"], reverse=True)
+    for index, player in enumerate(leaderboard):
+        player["rank"] = index + 1
+    return {"xp": xp, "total_badges": len(user["badges"]), "total_quests": len(user["stamps"]), "leaderboard": leaderboard}
 
 @app.get("/my-profile")
 def get_profile():
