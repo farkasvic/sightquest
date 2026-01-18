@@ -139,6 +139,27 @@
       <h1>Current Objective</h1>
       <p>Find the <b style="color: #d63384">Clock Tower</b></p>
 
+      <div
+        style="
+          background: #eef;
+          padding: 15px;
+          border-radius: 10px;
+          margin: 15px 0;
+          border-left: 5px solid #6f42c1;
+          text-align: left;
+        "
+      >
+        <small style="color: #6f42c1; font-weight: bold"
+          >🔮 ORACLE'S CLUE:</small
+        >
+        <p
+          id="riddle-text"
+          style="font-style: italic; margin-top: 5px; color: #444"
+        >
+          Summoning the Oracle...
+        </p>
+      </div>
+
       <span id="distance">--- m</span>
       <p id="status">Waiting for GPS...</p>
 
@@ -323,7 +344,18 @@
         }
       }
 
-      // --- 4. GOD MODE ---
+      // --- 4. GEMINI RIDDLE LOGIC ---
+      async function loadRiddle() {
+        try {
+          const res = await fetch("/get-riddle");
+          const data = await res.json();
+          document.getElementById("riddle-text").innerText = data.riddle;
+        } catch (e) {
+          console.error("Failed to load riddle");
+        }
+      }
+
+      // --- 5. GOD MODE & RESET ---
       async function toggleGodMode() {
         try {
           const response = await fetch("/toggle-god-mode?enable=true", {
@@ -345,10 +377,14 @@
       }
 
       // --- INIT ---
+      document.addEventListener("DOMContentLoaded", () => {
+        loadProfile();
+        updateLocation();
+        loadRiddle(); // <--- Fetch the rhyme on load
+      });
+
       // Start GPS loop
       setInterval(updateLocation, 2000);
-      // Load initial profile data
-      loadProfile();
     </script>
   </body>
 </html>
