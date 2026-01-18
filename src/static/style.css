@@ -49,6 +49,7 @@ button {
   color: white;
   border: none;
   padding: 15px 30px;
+  margin: 1rem;
   font-size: 20px;
   border-radius: 50px;
   cursor: not-allowed;
@@ -84,4 +85,13 @@ button.active {
 #god-mode-btn:hover {
   opacity: 1;
   /* Fully visible on hover */
+}
+
+#category-buttons {
+  display: flex;
+  align-items: center;
+}
+
+#category-buttons button {
+  width: 15%;
 }

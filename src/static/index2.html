@@ -13,15 +13,17 @@
 
 <body>
     <div id="map"></div>
-    <select id="category">
-        <option value="Park">🏞️ Park</option>
-        <option value="History">🏛️ History</option>
-        <option value="Food">🍔 Food</option>
-        <option value="Cafe">☕ Cafe</option>
-        <option value="Landmark" selected>📍 Landmark</option>
-    </select>
+    <div id="category-buttons">
+        <button onclick="setCategory('Park')">🏞️ Park</button>
+        <button onclick="setCategory('History')">🏛️ History</button>
+        <button onclick="setCategory('Food')">🍔 Food</button>
+        <button onclick="setCategory('Cafe')">☕ Cafe</button>
+        <button onclick="setCategory('Landmark')" class="active">📍 Landmark</button>
+    </div>
+
 
     <button onclick="startSession(2000,4)">Apply Category</button>
+    <button onclick="completeSession()">Complete Category</button>
     <script src="/static/app.js"></script>
 </body>
 

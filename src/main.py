@@ -5,10 +5,11 @@ from dotenv import load_dotenv
 import base64
 import warnings
 import time
+import shutil
 from datetime import datetime
 from google import genai
 from google.genai import types 
-from fastapi import FastAPI, Query, Body
+from fastapi import FastAPI, Query, Body, HTTPException
 from fastapi.staticfiles import StaticFiles 
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -20,6 +21,10 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 app = FastAPI()
+
+DATA_DIR = Path("src/data")
+CURRENT_SESSION_FILE = DATA_DIR / "current_session_data.json"
+SESSIONS_DIR = DATA_DIR / "sessions"
 
 # --- ROBUST CONFIG (Fixes "Missing Key" errors) ---
 # 1. Find the .env file relative to this script (src/main.py)
@@ -369,11 +374,44 @@ def start_session(data: dict = Body(...)):
         "quests": quests,
     }
 
-    with open("current_session_data.json", "w", encoding="utf-8") as f:
+    with open("src/data/current_session_data.json", "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
 
     return {"status": "session_created", "huntId": hunt_id}
 
+@app.post("/complete-session")
+def complete_session():
+    if not CURRENT_SESSION_FILE.exists():
+        raise HTTPException(status_code=404, detail="No active session found")
+
+    # Load current session
+    with open(CURRENT_SESSION_FILE, "r", encoding="utf-8") as f:
+        session_data = json.load(f)
+
+    hunt_id = session_data.get("session", {}).get("huntId")
+
+    if not hunt_id:
+        raise HTTPException(status_code=400, detail="huntId missing from session")
+
+    # Ensure sessions directory exists
+    SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
+
+    target_file = SESSIONS_DIR / f"{hunt_id}.json"
+
+    # Optional: add completed timestamp
+    session_data["session"]["completedAt"] = (
+        __import__("datetime").datetime.utcnow().isoformat()
+    )
+
+    # Write archived copy
+    with open(target_file, "w", encoding="utf-8") as f:
+        json.dump(session_data, f, indent=2)
+
+    return {
+        "status": "completed",
+        "huntId": hunt_id,
+        "savedTo": str(target_file)
+    }
 
 @app.post("/collect-stamp")
 def collect_stamp(stamp: StampRequest):

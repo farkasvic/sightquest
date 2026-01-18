@@ -1,0 +1,77 @@
+{
+  "session": {
+    "huntId": "hunt_1768748747",
+    "startLocation": {
+      "lat": 49.262081484790976,
+      "lng": -123.24539523704617
+    },
+    "radiusMeters": 2000,
+    "category": "Cafe",
+    "currentQuestIndex": 0,
+    "totalPoints": 0,
+    "startedAt": "2026-01-18T15:05:47.459728Z",
+    "updatedAt": "2026-01-18T15:05:47.459728Z"
+  },
+  "quests": [
+    {
+      "id": "quest_1",
+      "sessionId": "hunt_1768748747",
+      "name": "The Mighty Oak @ the Well Cafe",
+      "location": {
+        "lat": 49.265648,
+        "lng": -123.244093
+      },
+      "category": "Cafe",
+      "riddle": "Find the place where history whispers.",
+      "status": "active",
+      "points": 100,
+      "order": 1,
+      "awardedPoints": 0
+    },
+    {
+      "id": "quest_2",
+      "sessionId": "hunt_1768748747",
+      "name": "The Original Beanery Coffee House",
+      "location": {
+        "lat": 49.2636905,
+        "lng": -123.2393097
+      },
+      "category": "Cafe",
+      "riddle": "Find the place where history whispers.",
+      "status": "locked",
+      "points": 100,
+      "order": 2,
+      "awardedPoints": 0
+    },
+    {
+      "id": "quest_3",
+      "sessionId": "hunt_1768748747",
+      "name": "Blenz Coffee",
+      "location": {
+        "lat": 49.2540679,
+        "lng": -123.2351196
+      },
+      "category": "Cafe",
+      "riddle": "Find the place where history whispers.",
+      "status": "locked",
+      "points": 100,
+      "order": 3,
+      "awardedPoints": 0
+    },
+    {
+      "id": "quest_4",
+      "sessionId": "hunt_1768748747",
+      "name": "McDonald's",
+      "location": {
+        "lat": 49.2666467,
+        "lng": -123.2425376
+      },
+      "category": "Cafe",
+      "riddle": "Find the place where history whispers.",
+      "status": "locked",
+      "points": 100,
+      "order": 4,
+      "awardedPoints": 0
+    }
+  ]
+}

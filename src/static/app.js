@@ -14,6 +14,7 @@ let map;
 let userMarker;
 let originLocation = null; // store the user’s starting point
 let originMarker;
+let selectedCategory = "Landmark";
 
 function initMap(lat, lng) {
   if (!map) {
@@ -36,7 +37,19 @@ function initMap(lat, lng) {
 }
 
 function getSelectedCategory() {
-  return document.getElementById("category").value;
+  return selectedCategory;
+}
+
+function setCategory(category) {
+  selectedCategory = category;
+  console.log("Category set to:", selectedCategory);
+
+  // UI highlight
+  document.querySelectorAll("#category-buttons button").forEach((btn) => {
+    btn.classList.remove("active");
+  });
+
+  event.target.classList.add("active");
 }
 
 // 2. Send GPS to Python Backend
@@ -110,10 +123,6 @@ let gameLandmarks = []; // stores the 4 randomly picked landmarks
 
 function startSession(radiusM, amountOfSpot) {
   console.log("Category button clicked");
-
-  const category = document.getElementById("category").value;
-  console.log("Selected category:", category);
-
   // Reset old data if needed
   gameLandmarks = [];
 
@@ -201,6 +210,19 @@ async function getRandomLandmarks(
     console.log("====================================");
   } catch (err) {
     console.error("Failed to fetch landmarks from backend:", err);
+  }
+}
+
+async function completeSession() {
+  try {
+    const res = await fetch("/complete-session", {
+      method: "POST",
+    });
+
+    const data = await res.json();
+    console.log("Session archived:", data);
+  } catch (err) {
+    console.error("Failed to complete session:", err);
   }
 }
 
