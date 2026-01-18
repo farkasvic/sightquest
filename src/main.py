@@ -4,10 +4,11 @@ from pathlib import Path
 from dotenv import load_dotenv
 import base64
 import warnings
+import time
 from datetime import datetime
 from google import genai
 from google.genai import types 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Body
 from fastapi.staticfiles import StaticFiles 
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -72,9 +73,11 @@ BADGE_RULES = {
 }
 
 CATEGORY_KEYWORDS = {
-    "Park": "park garden trail",
-    "History": "tourist_attraction point_of_interest art_gallery historic monument church",
-    "Food": "restaurant cafe bakery food"
+    "Park": "park",
+    "History": "history",
+    "Food": "food",
+    "Cafe": "cafe",
+    "Landmark": "landmark",
 }
 
 
@@ -308,7 +311,7 @@ def get_landmarks(
     radius: int = Query(2000),
     category: str = Query("Park")
 ):
-    keyword = CATEGORY_KEYWORDS.get(category, "tourist attraction")
+    keyword = CATEGORY_KEYWORDS.get(category, "landmark")
 
     url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
     params = {
@@ -325,6 +328,53 @@ def get_landmarks(
     except requests.RequestException as e:
         return {"error": str(e)}
         
+@app.post("/start-session")
+def start_session(data: dict = Body(...)):
+    now = datetime.utcnow().isoformat() + "Z"
+    hunt_id = f"hunt_{int(time.time())}"
+
+    # --- SESSION ---
+    session = {
+        "huntId": hunt_id,
+        "startLocation": data["startLocation"],
+        "radiusMeters": data["radiusMeters"],
+        "category": data["category"],
+        "currentQuestIndex": 0,
+        "totalPoints": 0,
+        "startedAt": now,
+        "updatedAt": now,
+    }
+
+    # --- QUESTS ---
+    quests = []
+    for lm in data["landmarks"]:
+        quests.append({
+            "id": f"quest_{lm['order']}",
+            "sessionId": hunt_id,
+            "name": lm["name"],
+            "location": {
+                "lat": lm["lat"],
+                "lng": lm["lng"],
+            },
+            "category": data["category"],
+            "riddle": "Find the place where history whispers.",  # placeholder
+            "status": "locked" if lm["order"] > 1 else "active",
+            "points": 100,
+            "order": lm["order"],
+            "awardedPoints": 0,
+        })
+
+    output = {
+        "session": session,
+        "quests": quests,
+    }
+
+    with open("current_session_data.json", "w", encoding="utf-8") as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
+
+    return {"status": "session_created", "huntId": hunt_id}
+
+
 @app.post("/collect-stamp")
 def collect_stamp(stamp: StampRequest):
     # Simplified to use the helper function

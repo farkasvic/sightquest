@@ -1,0 +1,77 @@
+{
+  "session": {
+    "huntId": "hunt_1768736237",
+    "startLocation": {
+      "lat": 49.26207917198927,
+      "lng": -123.24539333953075
+    },
+    "radiusMeters": 2000,
+    "category": "History",
+    "currentQuestIndex": 0,
+    "totalPoints": 0,
+    "startedAt": "2026-01-18T11:37:17.773716Z",
+    "updatedAt": "2026-01-18T11:37:17.773716Z"
+  },
+  "quests": [
+    {
+      "id": "quest_1",
+      "sessionId": "hunt_1768736237",
+      "name": "UBC Department of History",
+      "location": {
+        "lat": 49.268589,
+        "lng": -123.2534084
+      },
+      "category": "History",
+      "riddle": "Find the place where history whispers.",
+      "status": "active",
+      "points": 100,
+      "order": 1,
+      "awardedPoints": 0
+    },
+    {
+      "id": "quest_2",
+      "sessionId": "hunt_1768736237",
+      "name": "BC Golf Museum",
+      "location": {
+        "lat": 49.264371,
+        "lng": -123.2155397
+      },
+      "category": "History",
+      "riddle": "Find the place where history whispers.",
+      "status": "locked",
+      "points": 100,
+      "order": 2,
+      "awardedPoints": 0
+    },
+    {
+      "id": "quest_3",
+      "sessionId": "hunt_1768736237",
+      "name": "Indian Residential School History and Dialogue Centre",
+      "location": {
+        "lat": 49.2670132,
+        "lng": -123.2536533
+      },
+      "category": "History",
+      "riddle": "Find the place where history whispers.",
+      "status": "locked",
+      "points": 100,
+      "order": 3,
+      "awardedPoints": 0
+    },
+    {
+      "id": "quest_4",
+      "sessionId": "hunt_1768736237",
+      "name": "Great Trek Memorial Cairn",
+      "location": {
+        "lat": 49.2656651,
+        "lng": -123.2535321
+      },
+      "category": "History",
+      "riddle": "Find the place where history whispers.",
+      "status": "locked",
+      "points": 100,
+      "order": 4,
+      "awardedPoints": 0
+    }
+  ]
+}

@@ -1,5 +1,3 @@
-let gameLandmarks = []; // stores the 4 randomly picked landmarks
-
 // 1. Get GPS from Browser
 function updateLocation() {
   if (!navigator.geolocation) {
@@ -16,21 +14,6 @@ let map;
 let userMarker;
 let originLocation = null; // store the user’s starting point
 let originMarker;
-
-const CATEGORY_MAP = {
-  Park: {
-    label: "🏞️ Park",
-    types: ["tourist_attraction", "park", "natural_feature"],
-  },
-  History: {
-    label: "🏛️ History",
-    types: ["tourist_attraction", "museum", "church"],
-  },
-  Food: {
-    label: "🍔 Food",
-    types: ["restaurant", "cafe", "bakery"],
-  },
-};
 
 function initMap(lat, lng) {
   if (!map) {
@@ -75,7 +58,7 @@ async function sendPosition(position) {
       icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
     });
 
-    await getRandomLandmarks(originLocation.lat, originLocation.lon, 2000, 4);
+    // await getRandomLandmarks(originLocation.lat, originLocation.lon, 2000, 4);
   }
 
   // Update map marker
@@ -123,6 +106,30 @@ function showError(error) {
 //   }
 // }
 
+let gameLandmarks = []; // stores the 4 randomly picked landmarks
+
+function startSession(radiusM, amountOfSpot) {
+  console.log("Category button clicked");
+
+  const category = document.getElementById("category").value;
+  console.log("Selected category:", category);
+
+  // Reset old data if needed
+  gameLandmarks = [];
+
+  // Re-generate landmarks using current origin
+  if (originLocation) {
+    getRandomLandmarks(
+      originLocation.lat,
+      originLocation.lon,
+      radiusM,
+      amountOfSpot,
+    );
+  } else {
+    console.warn("Origin not set yet");
+  }
+}
+
 // 4️⃣ Fetch landmarks using REST API
 async function getRandomLandmarks(
   originLat,
@@ -139,7 +146,7 @@ async function getRandomLandmarks(
       `/get-landmarks?lat=${originLat}&lng=${originLng}&radius=${radius}&category=${category}`,
     );
     const data = await response.json();
-
+    console.log("data", data);
     if (!data.results || data.results.length === 0) {
       console.warn("No landmarks found nearby.");
       return;
@@ -149,6 +156,30 @@ async function getRandomLandmarks(
     const selected = shuffled.slice(0, count);
 
     gameLandmarks = selected;
+    console.log("gameLandmards", gameLandmarks);
+
+    const payload = {
+      startLocation: {
+        lat: originLocation.lat,
+        lng: originLocation.lon,
+      },
+      radiusMeters: radius,
+      category: getSelectedCategory(),
+      landmarks: selected.map((place, index) => ({
+        name: place.name,
+        lat: place.geometry.location.lat,
+        lng: place.geometry.location.lng,
+        order: index + 1,
+      })),
+    };
+
+    await fetch("/start-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    console.log("Landmarks sent to backend");
 
     console.log("===== Random Landmarks Selected =====");
     selected.forEach((place, index) => {
