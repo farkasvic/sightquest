@@ -1,1 +1,1 @@
-# nwhacks_tobenamed
+# SightQuest (NwHacks 2026)
